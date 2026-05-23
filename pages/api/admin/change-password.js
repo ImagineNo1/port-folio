@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import clientPromise from "../../../lib/mongodb";
+import { getMongoClient } from "../../../lib/mongodb";
 import { requireAdmin } from "../../../lib/auth";
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
@@ -17,7 +17,8 @@ export default async function handler(req, res) {
   const session = requireAdmin(req);
   if (!session) return res.status(401).json({ message: "Unauthorized" });
   const { currentPassword, newPassword } = req.body || {};
-  const client = await clientPromise;
+  const client = await getMongoClient();
+  if (!client) return res.status(500).json({ message: "MongoDB is not configured" });
   const users = client.db().collection("admin_users");
   const user = await users.findOne({ username: session.username });
   if (!user || !verifyPassword(currentPassword, user.passwordHash)) return res.status(400).json({ message: "Current password is wrong" });
