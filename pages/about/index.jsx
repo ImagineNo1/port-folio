@@ -92,7 +92,7 @@ export const aboutData = [
   },
 ];
 
-const About = () => {
+const About = ({ content }) => {
   const [index, setIndex] = useState(0);
 
   return (
@@ -107,7 +107,7 @@ const About = () => {
         exit="hidden"
         className="hidden xl:flex absolute bottom-0 -left-[370px]"
       >
-        <Avatar />
+        <Avatar src={content.profile.avatarImage} />
       </motion.div>
 
       <div className="container mx-auto h-full flex flex-col items-center xl:flex-row gap-x-6">
@@ -120,8 +120,7 @@ const About = () => {
             exit="hidden"
             className="h2"
           >
-            Captivating <span className="text-accent">stories</span> birth
-            magnificent designs.
+            {content.profile.aboutHeadingPrefix} <span className="text-accent">{content.profile.aboutHeadingAccent}</span> {content.profile.aboutHeadingSuffix}
           </motion.h2>
           <motion.p
             variants={fadeIn("right", 0.4)}
@@ -129,9 +128,7 @@ const About = () => {
             animate="show"
             className="max-w-[500px] mx-auto xl:mx-0 mb-6 xl:mb-12 px-2 xl:px-0"
           >
-            10 years ago, I begin freelancing as a developer. Since then, I've
-            done remote work for agencies, consulted for startups, and
-            collabrated on digital products for business and consumer use.
+            {content.profile.aboutDescription}
           </motion.p>
 
           {/* counters */}
@@ -235,5 +232,10 @@ const About = () => {
     </div>
   );
 };
+
+export async function getServerSideProps() {
+  const { getSiteContent } = await import("../../lib/contentService");
+  return { props: { content: await getSiteContent() } };
+}
 
 export default About;

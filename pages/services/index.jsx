@@ -7,7 +7,7 @@ import { fadeIn } from "../../variants";
 
 export const serviceData = [];
 
-const Services = () => {
+const Services = ({ content }) => {
   return (
     <div className="h-full bg-primary/30 py-36 flex items-center">
       <Circles />
@@ -22,7 +22,7 @@ const Services = () => {
               exit="hidden"
               className="h2 xl:mt-8"
             >
-              My services <span className="text-accent">.</span>
+              {content.services.heading} <span className="text-accent">.</span>
             </motion.h2>
             <motion.p
               variants={fadeIn("up", 0.4)}
@@ -31,8 +31,7 @@ const Services = () => {
               exit="hidden"
               className="mb-4 max-w-[400px] mx-auto lg:mx-0"
             >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur
-              tempora eligendi, quisquam tempore sint reiciendis.
+              {content.services.description}
             </motion.p>
           </div>
 
@@ -52,5 +51,10 @@ const Services = () => {
     </div>
   );
 };
+
+export async function getServerSideProps() {
+  const { getSiteContent } = await import("../../lib/contentService");
+  return { props: { content: await getSiteContent() } };
+}
 
 export default Services;
