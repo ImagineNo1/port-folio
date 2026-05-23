@@ -1,26 +1,29 @@
-import Image from "next/image";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import Socials from "../components/Socials";
 
-const Header = () => {
+const Header = ({ siteContent }) => {
+  const name = siteContent?.profile?.fullName || "";
+
+  const [firstName, lastName] = useMemo(() => {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return [parts[0] || "", ""];
+    return [parts[0], parts.slice(1).join(" ")];
+  }, [name]);
+
   return (
     <header className="absolute z-30 w-full items-center px-16 xl-px-0 xl:h-[90px]">
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row justify-between items-center gap-y-6 py-8">
-          {/* logo */}
-          <Link href="/">
-            <Image
-              src="/logo.svg"
-              alt="logo"
-              width={220}
-              height={48}
-              priority
-            />
+          <Link href="/" className="text-center leading-tight select-none">
+            <div className="text-4xl font-extrabold tracking-wide">
+              <span className="text-white">{firstName}</span>{" "}
+              <span className="font-light text-white/90">{lastName}</span>
+              <span className="text-accent">.</span>
+            </div>
           </Link>
-
-          {/* socials */}
-          <Socials />
+          <Socials socials={siteContent?.socials} />
         </div>
       </div>
     </header>

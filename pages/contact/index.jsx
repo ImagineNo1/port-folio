@@ -14,16 +14,23 @@ const Contact = () => {
     const myForm = event.target;
     const formData = new FormData(myForm);
 
-    fetch("/__forms.html", {
+    fetch("/api/contact", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(formData).toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject"),
+        message: formData.get("message"),
+      }),
     })
-      .then((res) => {
-        if (res.status === 200) {
+      .then(async (res) => {
+        if (res.ok) {
           alert("Thank you. I will get back to you ASAP.");
+          myForm.reset();
         } else {
-          console.log(res);
+          const data = await res.json().catch(() => ({}));
+          alert(data.message || "Failed to send message");
         }
       })
       .catch((error) => console.log(error))
