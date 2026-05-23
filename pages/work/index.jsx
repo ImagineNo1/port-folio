@@ -5,7 +5,7 @@ import Circles from "../../components/Circles";
 import WorkSlider from "../../components/WorkSlider";
 import { fadeIn } from "../../variants";
 
-const Work = () => {
+const Work = ({ content }) => {
   return (
     <div className="h-full bg-primary/30 py-36 flex items-center">
       <Circles />
@@ -20,7 +20,7 @@ const Work = () => {
               exit="hidden"
               className="h2 xl:mt-12"
             >
-              My work <span className="text-accent">.</span>
+              {content.work.heading} <span className="text-accent">.</span>
             </motion.h2>
             <motion.p
               variants={fadeIn("up", 0.4)}
@@ -29,8 +29,7 @@ const Work = () => {
               exit="hidden"
               className="mb-4 max-w-[400px] mx-auto lg:mx-0"
             >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur
-              tempora eligendi, quisquam tempore sint reiciendis.
+              {content.work.description}
             </motion.p>
           </div>
 
@@ -42,7 +41,7 @@ const Work = () => {
             exit="hidden"
             className="w-full xl:max-w-[65%]"
           >
-            <WorkSlider />
+            <WorkSlider slides={content.work.slides} />
           </motion.div>
         </div>
       </div>
@@ -50,5 +49,10 @@ const Work = () => {
     </div>
   );
 };
+
+export async function getServerSideProps() {
+  const { getSiteContent } = await import("../../lib/contentService");
+  return { props: { content: await getSiteContent() } };
+}
 
 export default Work;

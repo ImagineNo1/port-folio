@@ -92,7 +92,7 @@ export const aboutData = [
   },
 ];
 
-const About = () => {
+const About = ({ content }) => {
   const [index, setIndex] = useState(0);
 
   return (
@@ -107,7 +107,7 @@ const About = () => {
         exit="hidden"
         className="hidden xl:flex absolute bottom-0 -left-[370px]"
       >
-        <Avatar />
+        <Avatar src={content.profile.avatarImage} />
       </motion.div>
 
       <div className="container mx-auto h-full flex flex-col items-center xl:flex-row gap-x-6">
@@ -120,8 +120,7 @@ const About = () => {
             exit="hidden"
             className="h2"
           >
-            Captivating <span className="text-accent">stories</span> birth
-            magnificent designs.
+            {content.profile.aboutHeadingPrefix} <span className="text-accent">{content.profile.aboutHeadingAccent}</span> {content.profile.aboutHeadingSuffix}
           </motion.h2>
           <motion.p
             variants={fadeIn("right", 0.4)}
@@ -129,9 +128,7 @@ const About = () => {
             animate="show"
             className="max-w-[500px] mx-auto xl:mx-0 mb-6 xl:mb-12 px-2 xl:px-0"
           >
-            10 years ago, I begin freelancing as a developer. Since then, I've
-            done remote work for agencies, consulted for startups, and
-            collabrated on digital products for business and consumer use.
+            {content.profile.aboutDescription}
           </motion.p>
 
           {/* counters */}
@@ -145,7 +142,7 @@ const About = () => {
               {/* experience */}
               <div className="relative flex-1 after:w-[1px] after:h-full after:bg-white/10 after:absolute after:top-0 after:right-0">
                 <div className="text-2xl xl:text-4xl font-extrabold text-accent mb-2">
-                  <CountUp start={0} end={10} duration={5} />
+                  <CountUp start={0} end={content.counters.yearsOfExperience} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
                   Years of experience.
@@ -155,7 +152,7 @@ const About = () => {
               {/* clients */}
               <div className="relative flex-1 after:w-[1px] after:h-full after:bg-white/10 after:absolute after:top-0 after:right-0">
                 <div className="text-2xl xl:text-4xl font-extrabold text-accent mb-2">
-                  <CountUp start={0} end={250} duration={5} />
+                  <CountUp start={0} end={content.counters.satisfiedClients} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
                   Satisfied clients.
@@ -165,7 +162,7 @@ const About = () => {
               {/* projects */}
               <div className="relative flex-1 after:w-[1px] after:h-full after:bg-white/10 after:absolute after:top-0 after:right-0">
                 <div className="text-2xl xl:text-4xl font-extrabold text-accent mb-2">
-                  <CountUp start={0} end={650} duration={5} />
+                  <CountUp start={0} end={content.counters.finishedProjects} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
                   Finished projects.
@@ -175,7 +172,7 @@ const About = () => {
               {/* awards */}
               <div className="relative flex-1">
                 <div className="text-2xl xl:text-4xl font-extrabold text-accent mb-2">
-                  <CountUp start={0} end={8} duration={5} />
+                  <CountUp start={0} end={content.counters.winningAwards} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
                   Winning awards.
@@ -194,7 +191,7 @@ const About = () => {
           className="flex flex-col w-full xl:max-w-[48%] h-[480px]"
         >
           <div className="flex gap-x-4 xl:gap-x-8 mx-auto xl:mx-0 mb-4">
-            {aboutData.map((item, itemI) => (
+            {(content.aboutData?.length ? content.aboutData : aboutData).map((item, itemI) => (
               <div
                 key={itemI}
                 className={`${
@@ -209,7 +206,7 @@ const About = () => {
           </div>
 
           <div className="py-2 xl:py-6 flex flex-col gap-y-2 xl:gap-y-4 items-center xl:items-start">
-            {aboutData[index].info.map((item, itemI) => (
+            {(content.aboutData?.length ? content.aboutData : aboutData)[index].info.map((item, itemI) => (
               <div
                 key={itemI}
                 className="flex-1 flex flex-col md:flex-row max-w-max gap-x-2 items-center text-center text-white/60"
@@ -235,5 +232,10 @@ const About = () => {
     </div>
   );
 };
+
+export async function getServerSideProps() {
+  const { getSiteContent } = await import("../../lib/contentService");
+  return { props: { content: await getSiteContent() } };
+}
 
 export default About;
