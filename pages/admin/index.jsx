@@ -112,7 +112,7 @@ export default function AdminPage() {
   });
 
   const renderCropPreview = async (source, square, x, y, nextAlpha) => {
-    if (!source) return;
+    if (!source) return "";
     const img = await loadImage(source);
     const canvas = document.createElement("canvas");
     const outW = square ? 256 : 900;
@@ -122,7 +122,7 @@ export default function AdminPage() {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, outW, outH);
 
-    const scale = square ? Math.max(outW / img.width, outH / img.height) : Math.min(outW / img.width, outH / img.height);
+    const scale = Math.max(outW / img.width, outH / img.height);
     const drawW = img.width * scale;
     const drawH = img.height * scale;
     const maxOffsetX = Math.max(0, drawW - outW);
@@ -133,7 +133,9 @@ export default function AdminPage() {
     ctx.globalAlpha = nextAlpha;
     ctx.drawImage(img, -offsetX, -offsetY, drawW, drawH);
     ctx.globalAlpha = 1;
-    setPreviewData(canvas.toDataURL("image/png"));
+    const nextPreview = canvas.toDataURL("image/png");
+    setPreviewData(nextPreview);
+    return nextPreview;
   };
 
   const openCropper = (event, targetPath, square = false, initialAlpha = 1) => {
@@ -155,9 +157,10 @@ export default function AdminPage() {
     event.target.value = "";
   };
 
-  const applyCrop = () => {
-    if (!previewData) return;
-    update(cropTargetPath, previewData);
+  const applyCrop = async () => {
+    const nextPreview = await renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha);
+    if (!nextPreview) return;
+    update(cropTargetPath, nextPreview);
     if (cropTargetPath === "profile.homeAvatarImage") update("profile.homeAvatarOpacity", alpha);
     if (cropTargetPath === "profile.aboutAvatarImage") update("profile.aboutAvatarOpacity", alpha);
     setCropOpen(false);
