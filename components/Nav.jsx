@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "../lib/language";
 
 // icons
 import {
@@ -31,6 +32,7 @@ export const navData = [
 
 const Nav = () => {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="flex flex-col items-center xl:justify-center gap-y-4 fixed h-max bottom-0 mt-auto xl:right-[2%] z-50 top-0 w-full xl:w-16 xl:max-w-md xl:h-screen">
@@ -50,7 +52,7 @@ const Nav = () => {
             >
               <div className="bg-white relative flex text-primary items-center p-[6px] rounded-[3px]">
                 <div className="text-[12px] leading-none font-semibold capitalize">
-                  {link.name}
+                  {t(link.name)}
                 </div>
 
                 {/* triangle */}

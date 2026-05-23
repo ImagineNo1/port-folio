@@ -6,6 +6,7 @@ import Layout from "../components/Layout";
 import Transition from "../components/Transition";
 
 import "../styles/globals.css";
+import { LanguageProvider } from "../lib/language";
 
 function PublicLoading() {
   return (
@@ -21,11 +22,11 @@ function PublicLoading() {
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const plainPage = router.pathname.startsWith("/admin") || router.pathname.startsWith("/debug");
-  const [siteContent, setSiteContent] = useState(null);
-  const [loading, setLoading] = useState(!plainPage);
+  const [siteContent, setSiteContent] = useState(pageProps?.siteContent || pageProps?.content || null);
+  const [loading, setLoading] = useState(!plainPage && !(pageProps?.siteContent || pageProps?.content));
 
   useEffect(() => {
-    if (plainPage) return;
+    if (plainPage || siteContent) return;
     const load = async () => {
       setLoading(true);
       const res = await fetch("/api/content");
@@ -34,7 +35,12 @@ function MyApp({ Component, pageProps }) {
       setLoading(false);
     };
     load();
-  }, [plainPage, router.asPath]);
+  }, [plainPage, siteContent]);
+
+  useEffect(() => {
+    const nextContent = pageProps?.siteContent || pageProps?.content || null;
+    if (nextContent) setSiteContent(nextContent);
+  }, [pageProps?.siteContent, pageProps?.content]);
 
   const page = (
     <AnimatePresence mode="wait">
@@ -47,7 +53,7 @@ function MyApp({ Component, pageProps }) {
 
   if (plainPage) return page;
   if (loading || !siteContent) return <PublicLoading />;
-  return <Layout siteContent={siteContent}>{page}</Layout>;
+  return <LanguageProvider><Layout siteContent={siteContent}>{page}</Layout></LanguageProvider>;
 }
 
 export default MyApp;

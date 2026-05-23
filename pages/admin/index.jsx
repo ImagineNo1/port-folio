@@ -103,6 +103,72 @@ export default function AdminPage() {
     }
   };
 
+
+  const loadImage = (src) => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+
+  const renderCropPreview = async (source, square, x, y, nextAlpha) => {
+    if (!source) return;
+    const img = await loadImage(source);
+    const canvas = document.createElement("canvas");
+    const outW = square ? 256 : 900;
+    const outH = square ? 256 : 900;
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, outW, outH);
+
+    const scale = square ? Math.max(outW / img.width, outH / img.height) : Math.min(outW / img.width, outH / img.height);
+    const drawW = img.width * scale;
+    const drawH = img.height * scale;
+    const maxOffsetX = Math.max(0, drawW - outW);
+    const maxOffsetY = Math.max(0, drawH - outH);
+    const offsetX = (x / 100) * maxOffsetX;
+    const offsetY = (y / 100) * maxOffsetY;
+
+    ctx.globalAlpha = nextAlpha;
+    ctx.drawImage(img, -offsetX, -offsetY, drawW, drawH);
+    ctx.globalAlpha = 1;
+    setPreviewData(canvas.toDataURL("image/png"));
+  };
+
+  const openCropper = (event, targetPath, square = false, initialAlpha = 1) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const source = String(ev.target?.result || "");
+      setCropTargetPath(targetPath);
+      setCropSquare(square);
+      setCropSource(source);
+      setCropX(50);
+      setCropY(50);
+      setAlpha(initialAlpha ?? 1);
+      setCropOpen(true);
+      await renderCropPreview(source, square, 50, 50, initialAlpha ?? 1);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
+  const applyCrop = () => {
+    if (!previewData) return;
+    update(cropTargetPath, previewData);
+    if (cropTargetPath === "profile.homeAvatarImage") update("profile.homeAvatarOpacity", alpha);
+    if (cropTargetPath === "profile.aboutAvatarImage") update("profile.aboutAvatarOpacity", alpha);
+    setCropOpen(false);
+  };
+
+  const quickTransparent = () => {
+    const transparentAlpha = 0.85;
+    setAlpha(transparentAlpha);
+    renderCropPreview(cropSource, cropSquare, cropX, cropY, transparentAlpha);
+  };
+
   const logout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
@@ -139,7 +205,7 @@ export default function AdminPage() {
                 <h2 className="font-bold mb-4">Home</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
-                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><p className="text-xs text-white/50 mt-2">برای کراپ، X/Y را تنظیم کنید و دوباره آپلود کنید.</p></Field>
+                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><p className="text-xs text-white/50 mt-2">برای بهترین نتیجه، عکس PNG شفاف (بدون بک‌گراند) آپلود کنید؛ سپس X/Y را برای جای‌گذاری تنظیم کنید.</p></Field>
                   <div className="md:col-span-2"><Field label="شعار سایت"><input className={inputClass} value={[content.profile?.heroTitleLine1 || "", content.profile?.heroTitleLine2 || ""].filter(Boolean).join(" ")} onChange={(e) => { const val = e.target.value; const mid = Math.ceil(val.length / 2); update("profile.heroTitleLine1", val.slice(0, mid).trim()); update("profile.heroTitleLine2", val.slice(mid).trim()); }} /></Field></div>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
                 </div>
@@ -193,13 +259,6 @@ export default function AdminPage() {
               <section className={cardClass}><h2 className="font-bold mb-4">مشخصات سایت</h2><div className="grid md:grid-cols-2 gap-4">
                 <Field label="Title سایت (تگ title)"><input className={inputClass} value={content.siteSettings?.title || ""} onChange={(e) => update("siteSettings.title", e.target.value)} /></Field>
                 <Field label="Favicon (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "siteSettings.favicon", true, 1)} /></Field>
-                <div className="md:col-span-2 rounded-xl border border-white/10 p-4">
-                  <p className="text-sm mb-2">نوار تنظیم کراپ قبل از آپلود</p>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>setCropX(Number(e.target.value))} className="w-full"/></label>
-                    <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>setCropY(Number(e.target.value))} className="w-full"/></label>
-                  </div>
-                </div>
               </div></section>
             )}
 
@@ -217,7 +276,8 @@ export default function AdminPage() {
                       <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha); }} className="w-full"/></label>
                       <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha); }} className="w-full"/></label>
                       <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v); }} className="w-full"/></label>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        <button onClick={quickTransparent} className="px-4 py-2 rounded-xl bg-cyan-600">شفاف‌سازی سریع</button>
                         <button onClick={applyCrop} className="px-4 py-2 rounded-xl bg-purple-600">اعمال</button>
                         <button onClick={()=>setCropOpen(false)} className="px-4 py-2 rounded-xl border border-white/20">بستن</button>
                       </div>

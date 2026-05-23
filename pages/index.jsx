@@ -69,7 +69,7 @@ const Home = ({ content }) => {
           animate="show"
           exit="hidden"
           transition={{ duration: 1, ease: "easeInOut" }}
-          className="w-full h-full max-w-[737px] max-h-[678px] absolute -bottom-32 lg:bottom-0 lg:right-[8%]"
+          className="w-full h-full max-w-[760px] max-h-[700px] absolute -bottom-32 lg:bottom-0 lg:right-[6%]"
         >
           <Avatar src={content.profile.homeAvatarImage || content.profile.aboutAvatarImage || "/avatar.png"} opacity={content.profile.homeAvatarOpacity ?? 1} />
         </motion.div>
