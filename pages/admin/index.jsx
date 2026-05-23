@@ -1,12 +1,40 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
+const sections = [
+  {
+    title: "اطلاعات پروفایل",
+    fields: [
+      ["fullName", "نام کامل"],
+      ["email", "ایمیل"],
+      ["phone", "تلفن"],
+      ["address", "آدرس"],
+      ["avatarImage", "آدرس تصویر آواتار", true],
+    ],
+  },
+  {
+    title: "بخش هیرو",
+    fields: [
+      ["heroTitleLine1", "عنوان خط اول"],
+      ["heroTitleLine2", "عنوان خط دوم"],
+      ["heroSubtitle", "توضیحات هیرو", true],
+    ],
+  },
+  {
+    title: "بخش درباره من",
+    fields: [
+      ["aboutHeadingPrefix", "پیشوند عنوان"],
+      ["aboutHeadingAccent", "بخش برجسته عنوان"],
+      ["aboutHeadingSuffix", "پسوند عنوان", true],
+      ["aboutDescription", "توضیحات درباره من", true],
+    ],
+  },
+];
+
 export default function AdminPage() {
   const router = useRouter();
   const [content, setContent] = useState(null);
-  const [editor, setEditor] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -16,72 +44,80 @@ export default function AdminPage() {
         router.replace("/admin/login");
         return;
       }
-
       const data = await response.json();
       setContent(data);
-      setEditor(JSON.stringify(data, null, 2));
     };
-
     load();
   }, [router]);
 
+  const updateField = (key, value) => setContent((prev) => ({ ...prev, [key]: value }));
+
   const saveContent = async () => {
-    try {
-      const parsed = JSON.parse(editor);
-      const response = await fetch("/api/admin/content", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
-      });
-      setMsg(response.ok ? "تغییرات با موفقیت ذخیره شد." : "خطا در ذخیره تغییرات");
-    } catch {
-      setMsg("ساختار JSON معتبر نیست.");
-    }
-  };
-
-  const changePassword = async () => {
-    const response = await fetch("/api/admin/change-password", {
-      method: "POST",
+    setSaving(true);
+    const response = await fetch("/api/admin/content", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword }),
+      body: JSON.stringify(content),
     });
-    const data = await response.json().catch(() => ({}));
-    setMsg(response.ok ? "رمز عبور با موفقیت تغییر کرد." : data.message || "خطا در تغییر رمز عبور");
-    if (response.ok) {
-      setCurrentPassword("");
-      setNewPassword("");
-    }
+    setMsg(response.ok ? "تغییرات ذخیره شد." : "خطا در ذخیره تغییرات");
+    setSaving(false);
   };
 
-  if (!content) {
-    return <div className="min-h-screen grid place-items-center text-white bg-slate-950">در حال بارگذاری...</div>;
-  }
+  const logout = () => {
+    document.cookie = "admin_token=; Max-Age=0; path=/";
+    router.push("/admin/login");
+  };
+
+  if (!content) return <div className="min-h-screen grid place-items-center text-white bg-[#030b24]">در حال بارگذاری...</div>;
 
   return (
-    <div dir="rtl" className="min-h-screen w-full text-white bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/30 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">پنل مدیریت</h1>
-          <p className="text-white/60 mt-2">مدیریت اطلاعات سایت و امنیت حساب</p>
-        </div>
-
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6">
-          <h2 className="font-bold mb-4">تغییر رمز عبور</h2>
-          <div className="grid md:grid-cols-[1fr_1fr_auto] gap-3">
-            <input type="password" placeholder="رمز فعلی" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="rounded-xl bg-white/5 border border-white/15 px-4 py-3 outline-none focus:border-violet-400" />
-            <input type="password" placeholder="رمز جدید" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="rounded-xl bg-white/5 border border-white/15 px-4 py-3 outline-none focus:border-violet-400" />
-            <button onClick={changePassword} className="rounded-xl px-5 py-3 bg-gradient-to-r from-violet-600 to-pink-600">ثبت</button>
+    <div dir="rtl" className="min-h-screen text-white bg-[#030b24] bg-[radial-gradient(circle_at_35%_25%,rgba(120,84,255,0.15),transparent_45%),radial-gradient(circle_at_60%_55%,rgba(255,89,170,0.12),transparent_40%)]">
+      <div className="grid lg:grid-cols-[260px_1fr] min-h-screen">
+        <aside className="order-2 lg:order-1 border-l border-white/10 bg-[#020a21]/80 p-6 flex flex-col">
+          <div>
+            <p className="text-xs text-white/50">پنل مدیریت</p>
+            <p className="font-semibold">admin</p>
+            <div className="mt-8 space-y-2 text-sm">
+              <button className="w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20">اطلاعات سایت</button>
+              <button className="w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</button>
+            </div>
           </div>
-        </section>
+          <button onClick={logout} className="mt-auto text-red-300 border border-red-300/25 rounded-xl py-3">خروج از حساب</button>
+        </aside>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6">
-          <h2 className="font-bold mb-2">ویرایش محتوای JSON</h2>
-          <textarea className="w-full h-[420px] rounded-xl bg-[#0a122f] border border-white/10 p-4 font-mono text-sm leading-7 outline-none focus:border-violet-400" value={editor} onChange={(e) => setEditor(e.target.value)} />
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button className="rounded-xl px-6 py-3 bg-gradient-to-r from-violet-600 to-pink-600" onClick={saveContent}>ذخیره تغییرات</button>
-            <span className="text-sm text-white/80">{msg}</span>
+        <main className="order-1 lg:order-2 p-4 md:p-8 lg:p-10">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl font-black">اطلاعات سایت</h1>
+            <p className="text-white/50 mt-2 mb-6">محتوای سایت خود را ویرایش کنید</p>
+
+            <div className="space-y-6">
+              {sections.map((section) => (
+                <section key={section.title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 md:p-6 backdrop-blur-sm">
+                  <h2 className="font-bold mb-4">{section.title}</h2>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {section.fields.map(([key, label, full]) => (
+                      <div key={key} className={full ? "md:col-span-2" : ""}>
+                        <label className="text-xs text-white/60 mb-2 block">{label}</label>
+                        {key.toLowerCase().includes("description") || key === "heroSubtitle" ? (
+                          <textarea value={content[key] || ""} onChange={(e) => updateField(key, e.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-violet-400" />
+                        ) : (
+                          <input value={content[key] || ""} onChange={(e) => updateField(key, e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-violet-400" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+
+            <div className="sticky bottom-4 mt-6">
+              <button onClick={saveContent} disabled={saving} className="w-full rounded-xl py-3 bg-gradient-to-r from-purple-600 to-pink-500 font-semibold">
+                {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+              </button>
+              {msg ? <p className="text-center text-sm text-white/75 mt-2">{msg}</p> : null}
+            </div>
           </div>
-        </section>
+        </main>
       </div>
     </div>
   );
