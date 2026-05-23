@@ -1,23 +1,14 @@
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import Socials from "../components/Socials";
 
-const Header = () => {
-  const [name, setName] = useState("Ethan Smith");
-
-  useEffect(() => {
-    const load = async () => {
-      const res = await fetch("/api/content");
-      const data = await res.json().catch(() => null);
-      if (data?.profile?.fullName) setName(data.profile.fullName);
-    };
-    load();
-  }, []);
+const Header = ({ siteContent }) => {
+  const name = siteContent?.profile?.fullName || "";
 
   const [firstName, lastName] = useMemo(() => {
     const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-    if (parts.length <= 1) return [parts[0] || "Ethan", "Smith"];
+    if (parts.length <= 1) return [parts[0] || "", ""];
     return [parts[0], parts.slice(1).join(" ")];
   }, [name]);
 
@@ -32,7 +23,7 @@ const Header = () => {
               <span className="text-accent">.</span>
             </div>
           </Link>
-          <Socials />
+          <Socials socials={siteContent?.socials} />
         </div>
       </div>
     </header>
