@@ -94,22 +94,22 @@ export default function AdminPage() {
           <div className="max-w-4xl mx-auto space-y-6">
             <h1 className="text-3xl font-black">اطلاعات سایت</h1>
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">پروفایل</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} placeholder="نام کامل" />
+              <input className={baseInput} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} placeholder="نام و نام خانوادگی" />
               <input className={baseInput} value={content.profile?.avatarImage || ""} onChange={(e) => update("profile.avatarImage", e.target.value)} placeholder="آدرس آواتار" />
-              <input className={baseInput} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} placeholder="عنوان هیرو ۱" />
-              <input className={baseInput} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} placeholder="عنوان هیرو ۲" />
-              <textarea rows={3} className={`${baseInput} md:col-span-2`} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} placeholder="متن هیرو" />
-              <input className={baseInput} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} placeholder="پیشوند about" />
-              <input className={baseInput} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} placeholder="بخش رنگی about" />
-              <input className={`${baseInput} md:col-span-2`} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} placeholder="پسوند about" />
-              <textarea rows={4} className={`${baseInput} md:col-span-2`} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} placeholder="توضیحات درباره من" />
+              <input className={baseInput} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} placeholder="شعار سایت - خط اول" />
+              <input className={baseInput} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} placeholder="شعار سایت - خط دوم" />
+              <textarea rows={3} className={`${baseInput} md:col-span-2`} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} placeholder="subheader" />
+              <input className={baseInput} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} placeholder="about header - بخش اول" />
+              <input className={baseInput} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} placeholder="about header - بخش دوم" />
+              <input className={`${baseInput} md:col-span-2`} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} placeholder="about header - بخش سوم" />
+              <textarea rows={4} className={`${baseInput} md:col-span-2`} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} placeholder="about text" />
             </div></section>
 
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">شمارنده‌ها</h2><div className="grid md:grid-cols-2 gap-4">
-              <input type="number" className={baseInput} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} placeholder="سال تجربه" />
+              <input type="number" className={baseInput} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} placeholder="سابقه کار به سال" />
               <input type="number" className={baseInput} value={content.counters?.satisfiedClients || 0} onChange={(e) => update("counters.satisfiedClients", Number(e.target.value))} placeholder="مشتری" />
-              <input type="number" className={baseInput} value={content.counters?.finishedProjects || 0} onChange={(e) => update("counters.finishedProjects", Number(e.target.value))} placeholder="پروژه" />
-              <input type="number" className={baseInput} value={content.counters?.winningAwards || 0} onChange={(e) => update("counters.winningAwards", Number(e.target.value))} placeholder="جایزه" />
+              <input type="number" className={baseInput} value={content.counters?.finishedProjects || 0} onChange={(e) => update("counters.finishedProjects", Number(e.target.value))} placeholder="تعداد پروژه ها" />
+              <input type="number" className={baseInput} value={content.counters?.winningAwards || 0} onChange={(e) => update("counters.winningAwards", Number(e.target.value))} placeholder="جایزه های برده شده" />
             </div></section>
 
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">بخش‌های دیگر</h2><div className="grid md:grid-cols-2 gap-4">
@@ -118,6 +118,16 @@ export default function AdminPage() {
               <textarea rows={3} className={baseInput} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} placeholder="توضیح نمونه کار" />
               <textarea rows={3} className={baseInput} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} placeholder="توضیح خدمات" />
               <input className={`${baseInput} md:col-span-2`} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} placeholder="عنوان نظرات" />
+            </div></section>
+
+            
+            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">سوشال مدیا هدر</h2><div className="grid md:grid-cols-2 gap-4">
+              <input className={baseInput} value={content.socials?.youtube || ""} onChange={(e) => update("socials.youtube", e.target.value)} placeholder="لینک یوتیوب" />
+              <input className={baseInput} value={content.socials?.instagram || ""} onChange={(e) => update("socials.instagram", e.target.value)} placeholder="لینک اینستاگرام" />
+              <input className={baseInput} value={content.socials?.facebook || ""} onChange={(e) => update("socials.facebook", e.target.value)} placeholder="لینک فیسبوک" />
+              <input className={baseInput} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} placeholder="لینک دریبل" />
+              <input className={baseInput} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} placeholder="لینک پینترست" />
+              <input className={baseInput} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} placeholder="لینک گیتهاب" />
             </div></section>
 
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">آرایه‌های قابل شخصی‌سازی</h2>
