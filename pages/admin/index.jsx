@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [msg, setMsg] = useState("");
   const [aboutDataText, setAboutDataText] = useState("[]");
   const [testimonialItemsText, setTestimonialItemsText] = useState("[]");
+  const [serviceItemsText, setServiceItemsText] = useState("[]");
 
   const loadContent = async () => {
     const response = await fetch("/api/admin/content");
@@ -19,6 +20,7 @@ export default function AdminPage() {
     setContent(data);
     setAboutDataText(JSON.stringify(data.aboutData || [], null, 2));
     setTestimonialItemsText(JSON.stringify(data.testimonials?.items || [], null, 2));
+    setServiceItemsText(JSON.stringify(data.services?.items || [], null, 2));
   };
 
   useEffect(() => {
@@ -39,10 +41,12 @@ export default function AdminPage() {
     try {
       const aboutData = JSON.parse(aboutDataText);
       const testimonialItems = JSON.parse(testimonialItemsText);
+      const serviceItems = JSON.parse(serviceItemsText);
       const payload = {
         ...content,
         aboutData,
         testimonials: { ...(content.testimonials || {}), items: testimonialItems },
+        services: { ...(content.services || {}), items: serviceItems },
       };
       setSaving(true);
       const response = await fetch("/api/admin/content", {
@@ -82,8 +86,7 @@ export default function AdminPage() {
             <p className="font-semibold">admin</p>
             <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20 mt-6">اطلاعات سایت</Link>
             <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</Link>
-            <Link href="/debug" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">دیباگ دیتابیس</Link>
-          </div>
+                      </div>
           <button onClick={logout} className="mt-auto text-red-300 border border-red-300/25 rounded-xl py-3">خروج از حساب</button>
         </aside>
 
@@ -122,6 +125,8 @@ export default function AdminPage() {
               <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={aboutDataText} onChange={(e) => setAboutDataText(e.target.value)} />
               <label className="text-sm text-white/70 mt-4 block">testimonial items (JSON)</label>
               <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={testimonialItemsText} onChange={(e) => setTestimonialItemsText(e.target.value)} />
+                          <label className="text-sm text-white/70 mt-4 block">service items (JSON)</label>
+              <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={serviceItemsText} onChange={(e) => setServiceItemsText(e.target.value)} />
             </section>
 
             <div className="sticky bottom-4">

@@ -43,7 +43,7 @@ const Services = ({ content }) => {
             exit="hidden"
             className="w-full xl:max-w-[65%]"
           >
-            <ServiceSlider />
+            <ServiceSlider items={content.services.items} />
           </motion.div>
         </div>
       </div>
