@@ -38,11 +38,11 @@ const ParticlesContainer = () => {
           },
           modes: {
             push: {
-              quantity: 90,
+              quantity: 120,
             },
             repulse: {
-              distance: 200,
-              duration: 0.4,
+              distance: 180,
+              duration: 0.45,
             },
           },
         },
@@ -52,10 +52,10 @@ const ParticlesContainer = () => {
           },
           links: {
             color: "#f5d393",
-            distance: 150,
+            distance: 170,
             enable: true,
-            opacity: 0.5,
-            width: 1,
+            opacity: 0.65,
+            width: 1.2,
           },
           collisions: {
             enable: true,
@@ -67,18 +67,18 @@ const ParticlesContainer = () => {
               default: "bounce",
             },
             random: false,
-            speed: 1,
+            speed: 1.2,
             straight: false,
           },
           number: {
             density: {
               enable: true,
-              area: 800,
+              area: 900,
             },
-            value: 80,
+            value: 120,
           },
           opacity: {
-            value: 0.5,
+            value: 0.6,
           },
           shape: {
             type: "circle",
