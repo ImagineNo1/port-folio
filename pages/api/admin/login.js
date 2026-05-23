@@ -16,7 +16,11 @@ export default async function handler(req, res) {
     const client = await clientPromise;
     const user = await client.db().collection("admin_users").findOne({ username });
 
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    if (!user) {
+      return res.status(404).json({ message: "ادمینی ساخته نشده است", code: "NO_ADMIN" });
+    }
+
+    if (!verifyPassword(password, user.passwordHash)) {
       return res.status(401).json({ message: "نام کاربری یا رمز عبور اشتباه است" });
     }
 

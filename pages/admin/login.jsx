@@ -8,6 +8,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [dbStatus, setDbStatus] = useState("");
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   useEffect(() => {
     const check = async () => {
@@ -22,6 +23,19 @@ export default function AdminLoginPage() {
     const response = await fetch("/api/admin/db-check");
     const data = await response.json().catch(() => ({}));
     setDbStatus(data.message || (response.ok ? "اتصال موفق" : "بررسی ناموفق"));
+  };
+
+
+  const createDefaultAdmin = async () => {
+    setCreatingAdmin(true);
+    const response = await fetch("/api/admin/bootstrap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "admin", password: "admin" }),
+    });
+    const data = await response.json().catch(() => ({}));
+    setMessage(response.ok ? "ادمین پیش‌فرض ساخته شد. حالا با admin / admin وارد شوید." : data.message || "ساخت ادمین ناموفق بود");
+    setCreatingAdmin(false);
   };
 
   const handleLogin = async (e) => {
@@ -41,7 +55,11 @@ export default function AdminLoginPage() {
     }
 
     const data = await response.json().catch(() => ({}));
-    setMessage(data.message || "نام کاربری یا رمز عبور اشتباه است");
+    if (response.status === 404 && data.code === "NO_ADMIN") {
+      setMessage("هیچ ادمینی ساخته نشده. با دکمه زیر ادمین پیش‌فرض بسازید.");
+    } else {
+      setMessage(data.message || "نام کاربری یا رمز عبور اشتباه است");
+    }
     setLoading(false);
   };
 
@@ -99,6 +117,15 @@ export default function AdminLoginPage() {
             باگ‌یابی اتصال دیتابیس
           </button>
           {dbStatus ? <p className="text-white/70 text-xs text-center">{dbStatus}</p> : null}
+
+          <button
+            type="button"
+            onClick={createDefaultAdmin}
+            disabled={creatingAdmin}
+            className="w-full h-11 border border-purple-400/40 text-purple-200 rounded-xl text-sm hover:bg-purple-500/10"
+          >
+            {creatingAdmin ? "در حال ساخت ادمین..." : "ساخت ادمین پیش‌فرض (admin/admin)"}
+          </button>
         </form>
       </div>
     </div>
