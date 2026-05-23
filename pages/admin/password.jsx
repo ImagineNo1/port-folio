@@ -35,6 +35,7 @@ export default function AdminPasswordPage() {
           <p className="text-xs text-white/50">پنل مدیریت</p><p className="font-semibold">admin</p>
           <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10 mt-6">اطلاعات سایت</Link>
           <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20">تغییر رمز عبور</Link>
+          <Link href="/admin/contacts" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">Contacts</Link>
         </div>
         <button onClick={logout} className="mt-auto text-red-300 border border-red-300/25 rounded-xl py-3">خروج از حساب</button>
       </aside>

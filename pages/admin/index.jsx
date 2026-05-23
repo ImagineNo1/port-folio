@@ -106,6 +106,7 @@ export default function AdminPage() {
             <p className="font-semibold">admin</p>
             <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20 mt-6">اطلاعات سایت</Link>
             <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</Link>
+            <Link href="/admin/contacts" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">Contacts</Link>
                       </div>
           <button onClick={logout} className="mt-auto text-red-300 border border-red-300/25 rounded-xl py-3">خروج از حساب</button>
         </aside>
@@ -135,7 +136,7 @@ export default function AdminPage() {
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">بخش‌های دیگر</h2><div className="grid md:grid-cols-2 gap-4">
               <input className={baseInput} value={content.work?.heading || ""} onChange={(e) => update("work.heading", e.target.value)} placeholder="عنوان نمونه کار" />
               <input className={baseInput} value={content.services?.heading || ""} onChange={(e) => update("services.heading", e.target.value)} placeholder="عنوان خدمات" />
-              <textarea rows={3} className={baseInput} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} placeholder="توضیح نمونه کار" />
+              <textarea rows={3} className={baseInput} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} placeholder="متن کارها" />
               <textarea rows={3} className={baseInput} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} placeholder="متن خدمات" />
               <input className={`${baseInput} md:col-span-2`} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} placeholder="عنوان نظرات" />
             </div></section>
