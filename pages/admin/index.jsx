@@ -59,8 +59,7 @@ export default function AdminPage() {
     { key: "testimonials", label: "Testimonials" },
     { key: "header", label: "Header/Social" },
     { key: "site", label: "مشخصات سایت" },
-    { key: "advanced", label: "Advanced" },
-  ]), []);
+      ]), []);
 
 
   const handleImageUpload = (event, path, square = false) => {
@@ -163,8 +162,7 @@ export default function AdminPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
                   <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.homeAvatarImage")} /><p className="text-xs text-white/50 mt-2">برای کراپ، X/Y را تنظیم کنید و دوباره آپلود کنید.</p></Field>
-                  <Field label="شعار سایت - خط اول"><input className={inputClass} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} /></Field>
-                  <Field label="شعار سایت - خط دوم"><input className={inputClass} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} /></Field>
+                  <div className="md:col-span-2"><Field label="شعار سایت"><input className={inputClass} value={[content.profile?.heroTitleLine1 || "", content.profile?.heroTitleLine2 || ""].filter(Boolean).join(" ")} onChange={(e) => { const val = e.target.value; const mid = Math.ceil(val.length / 2); update("profile.heroTitleLine1", val.slice(0, mid).trim()); update("profile.heroTitleLine2", val.slice(mid).trim()); }} /></Field></div>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
                 </div>
               </section>
@@ -173,9 +171,7 @@ export default function AdminPage() {
             {activeTab === "about" && (
               <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
                 <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.aboutAvatarImage")} /></Field>
-                <Field label="about header - بخش اول"><input className={inputClass} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} /></Field>
-                <Field label="about header - بخش دوم"><input className={inputClass} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} /></Field>
-                <div className="md:col-span-2"><Field label="about header - بخش سوم"><input className={inputClass} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} /></Field></div>
+                <div className="md:col-span-2"><Field label="about header"><input className={inputClass} value={[content.profile?.aboutHeadingPrefix || "", content.profile?.aboutHeadingAccent || "", content.profile?.aboutHeadingSuffix || ""].filter(Boolean).join(" ")} onChange={(e) => { const parts = e.target.value.trim().split(/\s+/); const one = Math.ceil(parts.length/3); const two = Math.ceil((parts.length-one)/2); update("profile.aboutHeadingPrefix", parts.slice(0, one).join(" ")); update("profile.aboutHeadingAccent", parts.slice(one, one+two).join(" ")); update("profile.aboutHeadingSuffix", parts.slice(one+two).join(" ")); }} /></Field></div>
                 <div className="md:col-span-2"><Field label="about text"><textarea rows={4} className={inputClass} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} /></Field></div>
                 <Field label="سابقه کار به سال"><input type="number" className={inputClass} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} /></Field>
                 <Field label="مشتری"><input type="number" className={inputClass} value={content.counters?.satisfiedClients || 0} onChange={(e) => update("counters.satisfiedClients", Number(e.target.value))} /></Field>
@@ -188,8 +184,7 @@ export default function AdminPage() {
               <section className={cardClass}><h2 className="font-bold mb-4">Services</h2><div className="grid md:grid-cols-2 gap-4">
                 <Field label="عنوان خدمات"><input className={inputClass} value={content.services?.heading || ""} onChange={(e) => update("services.heading", e.target.value)} /></Field>
                 <div className="md:col-span-2"><Field label="متن خدمات"><textarea rows={4} className={inputClass} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} /></Field></div>
-                <div className="md:col-span-2"><Field label="service items (JSON)"><textarea rows={8} className={`${inputClass} font-mono`} value={serviceItemsText} onChange={(e) => setServiceItemsText(e.target.value)} /></Field></div>
-              </div></section>
+                              </div></section>
             )}
 
             {activeTab === "work" && (
@@ -202,8 +197,7 @@ export default function AdminPage() {
             {activeTab === "testimonials" && (
               <section className={cardClass}><h2 className="font-bold mb-4">Testimonials</h2><div className="grid md:grid-cols-2 gap-4">
                 <Field label="عنوان نظرات"><input className={inputClass} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} /></Field>
-                <div className="md:col-span-2"><Field label="testimonial items (JSON)"><textarea rows={8} className={`${inputClass} font-mono`} value={testimonialItemsText} onChange={(e) => setTestimonialItemsText(e.target.value)} /></Field></div>
-              </div></section>
+                              </div></section>
             )}
 
             {activeTab === "header" && (
@@ -229,12 +223,6 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div></section>
-            )}
-
-            {activeTab === "advanced" && (
-              <section className={cardClass}><h2 className="font-bold mb-4">Advanced JSON</h2>
-                <Field label="aboutData (JSON)"><textarea rows={10} className={`${inputClass} font-mono`} value={aboutDataText} onChange={(e) => setAboutDataText(e.target.value)} /></Field>
-              </section>
             )}
 
             <div className="sticky bottom-4">
