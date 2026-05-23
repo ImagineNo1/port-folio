@@ -205,6 +205,20 @@ export default function AdminPage() {
     event.target.value = "";
   };
 
+
+  const openCropperFromSource = async (source, targetPath, square = false, initialAlpha = 1) => {
+    if (!source) return;
+    setCropTargetPath(targetPath);
+    setCropSquare(square);
+    setCropSource(source);
+    setCropX(50);
+    setCropY(50);
+    setAlpha(initialAlpha ?? 1);
+    setZoom(1.2);
+    setCropOpen(true);
+    await renderCropPreview(source, square, 50, 50, initialAlpha ?? 1, 1.2);
+  };
+
   const applyCrop = async () => {
     const nextPreview = await renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha, zoom);
     if (!nextPreview) return;
@@ -263,7 +277,7 @@ export default function AdminPage() {
                 <h2 className="font-bold mb-4">Home</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
-                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><p className="text-xs text-white/50 mt-2">برای بهترین نتیجه، عکس PNG شفاف (بدون بک‌گراند) آپلود کنید؛ سپس X/Y را برای جای‌گذاری تنظیم کنید.</p></Field>
+                  <Field label="تصویر Home (آپلود)"><div className="space-y-2"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><button type="button" onClick={() => openCropperFromSource(content.profile?.homeAvatarImage || content.profile?.aboutAvatarImage, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} className="px-3 py-2 rounded-xl border border-white/20 text-sm">ویرایش عکس فعلی</button><p className="text-xs text-white/50 mt-2">برای بهترین نتیجه، عکس PNG شفاف (بدون بک‌گراند) آپلود کنید؛ سپس X/Y را برای جای‌گذاری تنظیم کنید.</p></div></Field>
                   <div className="md:col-span-2"><Field label="شعار سایت"><input className={inputClass} value={[content.profile?.heroTitleLine1 || "", content.profile?.heroTitleLine2 || ""].filter(Boolean).join(" ")} onChange={(e) => { const val = e.target.value; const mid = Math.ceil(val.length / 2); update("profile.heroTitleLine1", val.slice(0, mid).trim()); update("profile.heroTitleLine2", val.slice(mid).trim()); }} /></Field></div>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
                 </div>
@@ -272,7 +286,7 @@ export default function AdminPage() {
 
             {activeTab === "about" && (
               <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
-                <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} /></Field>
+                <Field label="تصویر سمت چپ About (آپلود)"><div className="space-y-2"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} /><button type="button" onClick={() => openCropperFromSource(content.profile?.aboutAvatarImage || content.profile?.homeAvatarImage, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} className="px-3 py-2 rounded-xl border border-white/20 text-sm">ویرایش عکس فعلی</button></div></Field>
                 <div className="md:col-span-2"><Field label="about header"><input className={inputClass} value={[content.profile?.aboutHeadingPrefix || "", content.profile?.aboutHeadingAccent || "", content.profile?.aboutHeadingSuffix || ""].filter(Boolean).join(" ")} onChange={(e) => { const parts = e.target.value.trim().split(/\s+/); const one = Math.ceil(parts.length/3); const two = Math.ceil((parts.length-one)/2); update("profile.aboutHeadingPrefix", parts.slice(0, one).join(" ")); update("profile.aboutHeadingAccent", parts.slice(one, one+two).join(" ")); update("profile.aboutHeadingSuffix", parts.slice(one+two).join(" ")); }} /></Field></div>
                 <div className="md:col-span-2"><Field label="about text"><textarea rows={4} className={inputClass} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} /></Field></div>
                 <Field label="سابقه کار به سال"><input type="number" className={inputClass} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} /></Field>
