@@ -6,8 +6,12 @@ export default async function handler(req, res) {
   const session = requireAdmin(req);
   if (!session) return res.status(401).json({ message: "Unauthorized" });
   if (req.method === "PUT") {
-    await saveSiteContent(req.body);
-    return res.status(200).json({ ok: true });
+    try {
+      await saveSiteContent(req.body);
+      return res.status(200).json({ ok: true });
+    } catch (error) {
+      return res.status(500).json({ message: error.message || "Failed to save content" });
+    }
   }
   return res.status(405).end();
 }
