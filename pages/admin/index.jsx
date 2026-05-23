@@ -12,6 +12,10 @@ export default function AdminPage() {
   const [aboutDataText, setAboutDataText] = useState("[]");
   const [testimonialItemsText, setTestimonialItemsText] = useState("[]");
   const [serviceItemsText, setServiceItemsText] = useState("[]");
+  const [aboutSkillsTitle, setAboutSkillsTitle] = useState("skills");
+  const [aboutAwardsTitle, setAboutAwardsTitle] = useState("awards");
+  const [aboutExperienceTitle, setAboutExperienceTitle] = useState("experience");
+  const [aboutCredentialsTitle, setAboutCredentialsTitle] = useState("credentials");
 
   const loadContent = async () => {
     const response = await fetch("/api/admin/content");
@@ -21,6 +25,11 @@ export default function AdminPage() {
     setAboutDataText(JSON.stringify(data.aboutData || [], null, 2));
     setTestimonialItemsText(JSON.stringify(data.testimonials?.items || [], null, 2));
     setServiceItemsText(JSON.stringify(data.services?.items || [], null, 2));
+    const tabs = data.aboutData || [];
+    setAboutSkillsTitle(tabs[0]?.title || "skills");
+    setAboutAwardsTitle(tabs[1]?.title || "awards");
+    setAboutExperienceTitle(tabs[2]?.title || "experience");
+    setAboutCredentialsTitle(tabs[3]?.title || "credentials");
   };
 
   useEffect(() => {
@@ -42,11 +51,22 @@ export default function AdminPage() {
       const aboutData = JSON.parse(aboutDataText);
       const testimonialItems = JSON.parse(testimonialItemsText);
       const serviceItems = JSON.parse(serviceItemsText);
+      const patchedAboutData = [
+        { ...(aboutData[0] || {}), title: aboutSkillsTitle },
+        { ...(aboutData[1] || {}), title: aboutAwardsTitle },
+        { ...(aboutData[2] || {}), title: aboutExperienceTitle },
+        { ...(aboutData[3] || {}), title: aboutCredentialsTitle },
+        ...aboutData.slice(4),
+      ];
+
+      const normalizedServiceItems = [...(serviceItems || [])];
+      while (normalizedServiceItems.length < 3) normalizedServiceItems.push({ title: "", description: "", icon: "RxCrop" });
+
       const payload = {
         ...content,
-        aboutData,
+        aboutData: patchedAboutData,
         testimonials: { ...(content.testimonials || {}), items: testimonialItems },
-        services: { ...(content.services || {}), items: serviceItems },
+        services: { ...(content.services || {}), items: normalizedServiceItems },
       };
       setSaving(true);
       const response = await fetch("/api/admin/content", {
@@ -116,7 +136,7 @@ export default function AdminPage() {
               <input className={baseInput} value={content.work?.heading || ""} onChange={(e) => update("work.heading", e.target.value)} placeholder="عنوان نمونه کار" />
               <input className={baseInput} value={content.services?.heading || ""} onChange={(e) => update("services.heading", e.target.value)} placeholder="عنوان خدمات" />
               <textarea rows={3} className={baseInput} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} placeholder="توضیح نمونه کار" />
-              <textarea rows={3} className={baseInput} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} placeholder="توضیح خدمات" />
+              <textarea rows={3} className={baseInput} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} placeholder="متن خدمات" />
               <input className={`${baseInput} md:col-span-2`} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} placeholder="عنوان نظرات" />
             </div></section>
 
@@ -128,6 +148,21 @@ export default function AdminPage() {
               <input className={baseInput} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} placeholder="لینک دریبل" />
               <input className={baseInput} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} placeholder="لینک پینترست" />
               <input className={baseInput} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} placeholder="لینک گیتهاب" />
+            </div></section>
+
+            
+            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">تب‌های About</h2><div className="grid md:grid-cols-2 gap-4">
+              <input className={baseInput} value={aboutSkillsTitle} onChange={(e) => setAboutSkillsTitle(e.target.value)} placeholder="skills" />
+              <input className={baseInput} value={aboutAwardsTitle} onChange={(e) => setAboutAwardsTitle(e.target.value)} placeholder="awards" />
+              <input className={baseInput} value={aboutExperienceTitle} onChange={(e) => setAboutExperienceTitle(e.target.value)} placeholder="experience" />
+              <input className={baseInput} value={aboutCredentialsTitle} onChange={(e) => setAboutCredentialsTitle(e.target.value)} placeholder="credentials" />
+            </div><p className="text-xs text-white/60 mt-3">جزئیات متن/آیکون هر تب از JSON فیلد aboutData پایین صفحه قابل ویرایش است.</p></section>
+
+            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">آیتم‌های Services</h2><div className="grid md:grid-cols-2 gap-4">
+              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[0]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<1) arr.push({title:'',description:'',icon:'RxCrop'}); arr[0] = { ...(arr[0]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Branding" />
+              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[1]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<2) arr.push({title:'',description:'',icon:'RxPencil2'}); arr[1] = { ...(arr[1]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Design" />
+              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[2]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<3) arr.push({title:'',description:'',icon:'RxDesktop'}); arr[2] = { ...(arr[2]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Development" />
+              <textarea rows={3} className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[0]||{}).description || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<1) arr.push({title:'',description:'',icon:'RxCrop'}); arr[0] = { ...(arr[0]||{}), description: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="متن Branding" />
             </div></section>
 
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">آرایه‌های قابل شخصی‌سازی</h2>
