@@ -103,8 +103,8 @@ export default function AdminPage() {
     }
   };
 
-  const logout = () => {
-    document.cookie = "admin_token=; Max-Age=0; path=/";
+  const logout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
   };
 
@@ -115,9 +115,7 @@ export default function AdminPage() {
       <div className="grid lg:grid-cols-[260px_1fr] min-h-screen">
         <aside className="border-l border-white/10 bg-[#020a21]/80 p-6 flex flex-col">
           <div className="space-y-2 text-sm">
-            <p className="text-xs text-white/50">پنل مدیریت</p>
-            <p className="font-semibold">admin</p>
-            <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20 mt-6">اطلاعات سایت</Link>
+                        <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20 mt-6">اطلاعات سایت</Link>
             <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</Link>
             <Link href="/admin/contacts" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">Contacts</Link>
           </div>

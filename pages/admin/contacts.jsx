@@ -18,14 +18,13 @@ export default function AdminContactsPage() {
     load();
   }, [router]);
 
-  const logout = () => { document.cookie = "admin_token=; Max-Age=0; path=/"; router.push("/admin/login"); };
+  const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); router.push("/admin/login"); };
 
   return <div dir="rtl" className="min-h-screen text-white bg-[#030b24] bg-[radial-gradient(circle_at_35%_25%,rgba(120,84,255,0.15),transparent_45%)]">
     <div className="grid lg:grid-cols-[260px_1fr] min-h-screen">
       <aside className="border-l border-white/10 bg-[#020a21]/80 p-6 flex flex-col">
         <div className="space-y-2 text-sm">
-          <p className="text-xs text-white/50">پنل مدیریت</p><p className="font-semibold">admin</p>
-          <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10 mt-6">اطلاعات سایت</Link>
+                    <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10 mt-6">اطلاعات سایت</Link>
           <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</Link>
           <Link href="/admin/contacts" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20">Contacts</Link>
         </div>

@@ -2,10 +2,22 @@ import crypto from "crypto";
 import clientPromise from "../../../lib/mongodb";
 import { setAuthCookie, signAdminToken } from "../../../lib/auth";
 
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
 function verifyPassword(password, full) {
   const [salt, original] = full.split(":");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(original));
+}
+
+async function ensureDefaultAdmin(users) {
+  const count = await users.countDocuments();
+  if (count === 0) {
+    await users.insertOne({ username: "admin", passwordHash: hashPassword("admin"), createdAt: new Date() });
+  }
 }
 
 export default async function handler(req, res) {
@@ -14,13 +26,12 @@ export default async function handler(req, res) {
   try {
     const { username, password } = req.body || {};
     const client = await clientPromise;
-    const user = await client.db().collection("admin_users").findOne({ username });
+    const users = client.db().collection("admin_users");
 
-    if (!user) {
-      return res.status(404).json({ message: "ادمینی ساخته نشده است", code: "NO_ADMIN" });
-    }
+    await ensureDefaultAdmin(users);
 
-    if (!verifyPassword(password, user.passwordHash)) {
+    const user = await users.findOne({ username });
+    if (!user || !verifyPassword(password, user.passwordHash)) {
       return res.status(401).json({ message: "نام کاربری یا رمز عبور اشتباه است" });
     }
 
