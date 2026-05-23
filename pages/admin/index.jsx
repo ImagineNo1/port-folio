@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [cropSource, setCropSource] = useState("");
   const [previewData, setPreviewData] = useState("");
   const [alpha, setAlpha] = useState(1);
+  const [zoom, setZoom] = useState(1.2);
 
 
   const loadContent = async () => {
@@ -111,7 +112,53 @@ export default function AdminPage() {
     img.src = src;
   });
 
-  const renderCropPreview = async (source, square, x, y, nextAlpha) => {
+
+  const removeBackground = async (source) => {
+    if (!source) return "";
+    const img = await loadImage(source);
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    const frame = 16;
+    const corners = [
+      [0, 0],
+      [img.width - frame, 0],
+      [0, img.height - frame],
+      [img.width - frame, img.height - frame],
+    ];
+
+    let r = 0; let g = 0; let b = 0; let count = 0;
+    corners.forEach(([sx, sy]) => {
+      const data = ctx.getImageData(Math.max(0, sx), Math.max(0, sy), Math.min(frame, img.width), Math.min(frame, img.height)).data;
+      for (let i = 0; i < data.length; i += 4) {
+        r += data[i]; g += data[i + 1]; b += data[i + 2]; count += 1;
+      }
+    });
+
+    const avgR = r / count;
+    const avgG = g / count;
+    const avgB = b / count;
+    const tolerance = 52;
+
+    const image = ctx.getImageData(0, 0, img.width, img.height);
+    const px = image.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const dr = px[i] - avgR;
+      const dg = px[i + 1] - avgG;
+      const db = px[i + 2] - avgB;
+      const dist = Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+      if (dist < tolerance) px[i + 3] = 0;
+      else if (dist < tolerance + 22) px[i + 3] = Math.round(px[i + 3] * 0.45);
+    }
+
+    ctx.putImageData(image, 0, 0);
+    return canvas.toDataURL("image/png");
+  };
+
+  const renderCropPreview = async (source, square, x, y, nextAlpha, nextZoom = zoom) => {
     if (!source) return "";
     const img = await loadImage(source);
     const canvas = document.createElement("canvas");
@@ -122,7 +169,7 @@ export default function AdminPage() {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, outW, outH);
 
-    const scale = Math.max(outW / img.width, outH / img.height);
+    const scale = Math.max(outW / img.width, outH / img.height) * nextZoom;
     const drawW = img.width * scale;
     const drawH = img.height * scale;
     const maxOffsetX = Math.max(0, drawW - outW);
@@ -150,6 +197,7 @@ export default function AdminPage() {
       setCropX(50);
       setCropY(50);
       setAlpha(initialAlpha ?? 1);
+      setZoom(1.2);
       setCropOpen(true);
       await renderCropPreview(source, square, 50, 50, initialAlpha ?? 1);
     };
@@ -158,7 +206,7 @@ export default function AdminPage() {
   };
 
   const applyCrop = async () => {
-    const nextPreview = await renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha);
+    const nextPreview = await renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha, zoom);
     if (!nextPreview) return;
     update(cropTargetPath, nextPreview);
     if (cropTargetPath === "profile.homeAvatarImage") update("profile.homeAvatarOpacity", alpha);
@@ -169,7 +217,14 @@ export default function AdminPage() {
   const quickTransparent = () => {
     const transparentAlpha = 0.85;
     setAlpha(transparentAlpha);
-    renderCropPreview(cropSource, cropSquare, cropX, cropY, transparentAlpha);
+    renderCropPreview(cropSource, cropSquare, cropX, cropY, transparentAlpha, zoom);
+  };
+
+  const autoRemoveBackground = async () => {
+    const cleaned = await removeBackground(cropSource);
+    if (!cleaned) return;
+    setCropSource(cleaned);
+    await renderCropPreview(cleaned, cropSquare, cropX, cropY, alpha, zoom);
   };
 
   const logout = async () => {
@@ -276,11 +331,13 @@ export default function AdminPage() {
                       {previewData ? <img src={previewData} alt="preview" className="rounded-xl border border-white/10 max-h-[420px]" /> : null}
                     </div>
                     <div className="space-y-4">
-                      <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha); }} className="w-full"/></label>
-                      <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha); }} className="w-full"/></label>
-                      <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v); }} className="w-full"/></label>
+                      <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Zoom: {zoom.toFixed(2)}<input type="range" min="1" max="2.2" step="0.01" value={zoom} onChange={(e)=>{ const v=Number(e.target.value); setZoom(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha, v); }} className="w-full"/></label>
                       <div className="flex gap-2 flex-wrap">
                         <button onClick={quickTransparent} className="px-4 py-2 rounded-xl bg-cyan-600">شفاف‌سازی سریع</button>
+                        <button onClick={autoRemoveBackground} className="px-4 py-2 rounded-xl bg-emerald-600">انتخاب شخص / حذف پس‌زمینه</button>
                         <button onClick={applyCrop} className="px-4 py-2 rounded-xl bg-purple-600">اعمال</button>
                         <button onClick={()=>setCropOpen(false)} className="px-4 py-2 rounded-xl border border-white/20">بستن</button>
                       </div>
