@@ -205,9 +205,9 @@ export default function AdminPage() {
                 <Field label="لینک یوتیوب"><input className={inputClass} value={content.socials?.youtube || ""} onChange={(e) => update("socials.youtube", e.target.value)} /></Field>
                 <Field label="لینک اینستاگرام"><input className={inputClass} value={content.socials?.instagram || ""} onChange={(e) => update("socials.instagram", e.target.value)} /></Field>
                 <Field label="لینک فیسبوک"><input className={inputClass} value={content.socials?.facebook || ""} onChange={(e) => update("socials.facebook", e.target.value)} /></Field>
-                <Field label="لینک دریبل"><input className={inputClass} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} /></Field>
-                <Field label="لینک پینترست"><input className={inputClass} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} /></Field>
-                <Field label="لینک گیتهاب"><input className={inputClass} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} /></Field>
+                                <Field label="لینک پینترست"><input className={inputClass} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} /></Field>
+                <Field label="لینک تلگرام"><input className={inputClass} value={content.socials?.telegram || ""} onChange={(e) => update("socials.telegram", e.target.value)} /></Field>
+                <Field label="لینک واتساپ"><input className={inputClass} value={content.socials?.whatsapp || ""} onChange={(e) => update("socials.whatsapp", e.target.value)} /></Field>
               </div></section>
             )}
 
