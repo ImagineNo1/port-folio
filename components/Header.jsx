@@ -31,7 +31,6 @@ const Header = () => {
               <span className="font-light text-white/90">{lastName}</span>
               <span className="text-accent">.</span>
             </div>
-            <div className="text-sm text-white/70 mt-1">{name}</div>
           </Link>
           <Socials />
         </div>
