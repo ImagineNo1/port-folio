@@ -12,16 +12,17 @@ export default function AdminPage() {
   const [aboutDataText, setAboutDataText] = useState("[]");
   const [testimonialItemsText, setTestimonialItemsText] = useState("[]");
 
+  const loadContent = async () => {
+    const response = await fetch("/api/admin/content");
+    if (response.status === 401) return router.replace("/admin/login");
+    const data = await response.json();
+    setContent(data);
+    setAboutDataText(JSON.stringify(data.aboutData || [], null, 2));
+    setTestimonialItemsText(JSON.stringify(data.testimonials?.items || [], null, 2));
+  };
+
   useEffect(() => {
-    const load = async () => {
-      const response = await fetch("/api/admin/content");
-      if (response.status === 401) return router.replace("/admin/login");
-      const data = await response.json();
-      setContent(data);
-      setAboutDataText(JSON.stringify(data.aboutData || [], null, 2));
-      setTestimonialItemsText(JSON.stringify(data.testimonials?.items || [], null, 2));
-    };
-    load();
+    loadContent();
   }, [router]);
 
   const update = (path, value) => {
@@ -49,7 +50,15 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      setMsg(response.ok ? "تغییرات ذخیره شد." : "خطا در ذخیره تغییرات");
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        setMsg(err.message || "خطا در ذخیره تغییرات");
+        return;
+      }
+
+      await loadContent();
+      setMsg("تغییرات با موفقیت ذخیره و بازخوانی شد.");
     } catch (e) {
       setMsg(`JSON نامعتبر است: ${e.message}`);
     } finally {
