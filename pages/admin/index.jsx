@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [cropSource, setCropSource] = useState("");
   const [previewData, setPreviewData] = useState("");
   const [alpha, setAlpha] = useState(1);
+  const [zoom, setZoom] = useState(1.2);
 
 
   const loadContent = async () => {
@@ -111,8 +112,54 @@ export default function AdminPage() {
     img.src = src;
   });
 
-  const renderCropPreview = async (source, square, x, y, nextAlpha) => {
-    if (!source) return;
+
+  const removeBackground = async (source) => {
+    if (!source) return "";
+    const img = await loadImage(source);
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    const frame = 16;
+    const corners = [
+      [0, 0],
+      [img.width - frame, 0],
+      [0, img.height - frame],
+      [img.width - frame, img.height - frame],
+    ];
+
+    let r = 0; let g = 0; let b = 0; let count = 0;
+    corners.forEach(([sx, sy]) => {
+      const data = ctx.getImageData(Math.max(0, sx), Math.max(0, sy), Math.min(frame, img.width), Math.min(frame, img.height)).data;
+      for (let i = 0; i < data.length; i += 4) {
+        r += data[i]; g += data[i + 1]; b += data[i + 2]; count += 1;
+      }
+    });
+
+    const avgR = r / count;
+    const avgG = g / count;
+    const avgB = b / count;
+    const tolerance = 52;
+
+    const image = ctx.getImageData(0, 0, img.width, img.height);
+    const px = image.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const dr = px[i] - avgR;
+      const dg = px[i + 1] - avgG;
+      const db = px[i + 2] - avgB;
+      const dist = Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+      if (dist < tolerance) px[i + 3] = 0;
+      else if (dist < tolerance + 22) px[i + 3] = Math.round(px[i + 3] * 0.45);
+    }
+
+    ctx.putImageData(image, 0, 0);
+    return canvas.toDataURL("image/png");
+  };
+
+  const renderCropPreview = async (source, square, x, y, nextAlpha, nextZoom = zoom) => {
+    if (!source) return "";
     const img = await loadImage(source);
     const canvas = document.createElement("canvas");
     const outW = square ? 256 : 900;
@@ -122,7 +169,7 @@ export default function AdminPage() {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, outW, outH);
 
-    const scale = square ? Math.max(outW / img.width, outH / img.height) : Math.min(outW / img.width, outH / img.height);
+    const scale = Math.max(outW / img.width, outH / img.height) * nextZoom;
     const drawW = img.width * scale;
     const drawH = img.height * scale;
     const maxOffsetX = Math.max(0, drawW - outW);
@@ -133,7 +180,9 @@ export default function AdminPage() {
     ctx.globalAlpha = nextAlpha;
     ctx.drawImage(img, -offsetX, -offsetY, drawW, drawH);
     ctx.globalAlpha = 1;
-    setPreviewData(canvas.toDataURL("image/png"));
+    const nextPreview = canvas.toDataURL("image/png");
+    setPreviewData(nextPreview);
+    return nextPreview;
   };
 
   const openCropper = (event, targetPath, square = false, initialAlpha = 1) => {
@@ -148,6 +197,7 @@ export default function AdminPage() {
       setCropX(50);
       setCropY(50);
       setAlpha(initialAlpha ?? 1);
+      setZoom(1.2);
       setCropOpen(true);
       await renderCropPreview(source, square, 50, 50, initialAlpha ?? 1);
     };
@@ -155,9 +205,24 @@ export default function AdminPage() {
     event.target.value = "";
   };
 
-  const applyCrop = () => {
-    if (!previewData) return;
-    update(cropTargetPath, previewData);
+
+  const openCropperFromSource = async (source, targetPath, square = false, initialAlpha = 1) => {
+    if (!source) return;
+    setCropTargetPath(targetPath);
+    setCropSquare(square);
+    setCropSource(source);
+    setCropX(50);
+    setCropY(50);
+    setAlpha(initialAlpha ?? 1);
+    setZoom(1.2);
+    setCropOpen(true);
+    await renderCropPreview(source, square, 50, 50, initialAlpha ?? 1, 1.2);
+  };
+
+  const applyCrop = async () => {
+    const nextPreview = await renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha, zoom);
+    if (!nextPreview) return;
+    update(cropTargetPath, nextPreview);
     if (cropTargetPath === "profile.homeAvatarImage") update("profile.homeAvatarOpacity", alpha);
     if (cropTargetPath === "profile.aboutAvatarImage") update("profile.aboutAvatarOpacity", alpha);
     setCropOpen(false);
@@ -166,7 +231,14 @@ export default function AdminPage() {
   const quickTransparent = () => {
     const transparentAlpha = 0.85;
     setAlpha(transparentAlpha);
-    renderCropPreview(cropSource, cropSquare, cropX, cropY, transparentAlpha);
+    renderCropPreview(cropSource, cropSquare, cropX, cropY, transparentAlpha, zoom);
+  };
+
+  const autoRemoveBackground = async () => {
+    const cleaned = await removeBackground(cropSource);
+    if (!cleaned) return;
+    setCropSource(cleaned);
+    await renderCropPreview(cleaned, cropSquare, cropX, cropY, alpha, zoom);
   };
 
   const logout = async () => {
@@ -205,7 +277,7 @@ export default function AdminPage() {
                 <h2 className="font-bold mb-4">Home</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
-                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><p className="text-xs text-white/50 mt-2">برای بهترین نتیجه، عکس PNG شفاف (بدون بک‌گراند) آپلود کنید؛ سپس X/Y را برای جای‌گذاری تنظیم کنید.</p></Field>
+                  <Field label="تصویر Home (آپلود)"><div className="space-y-2"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><button type="button" onClick={() => openCropperFromSource(content.profile?.homeAvatarImage || content.profile?.aboutAvatarImage, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} className="px-3 py-2 rounded-xl border border-white/20 text-sm">ویرایش عکس فعلی</button><p className="text-xs text-white/50 mt-2">برای بهترین نتیجه، عکس PNG شفاف (بدون بک‌گراند) آپلود کنید؛ سپس X/Y را برای جای‌گذاری تنظیم کنید.</p></div></Field>
                   <div className="md:col-span-2"><Field label="شعار سایت"><input className={inputClass} value={[content.profile?.heroTitleLine1 || "", content.profile?.heroTitleLine2 || ""].filter(Boolean).join(" ")} onChange={(e) => { const val = e.target.value; const mid = Math.ceil(val.length / 2); update("profile.heroTitleLine1", val.slice(0, mid).trim()); update("profile.heroTitleLine2", val.slice(mid).trim()); }} /></Field></div>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
                 </div>
@@ -214,7 +286,7 @@ export default function AdminPage() {
 
             {activeTab === "about" && (
               <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
-                <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} /></Field>
+                <Field label="تصویر سمت چپ About (آپلود)"><div className="space-y-2"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} /><button type="button" onClick={() => openCropperFromSource(content.profile?.aboutAvatarImage || content.profile?.homeAvatarImage, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} className="px-3 py-2 rounded-xl border border-white/20 text-sm">ویرایش عکس فعلی</button></div></Field>
                 <div className="md:col-span-2"><Field label="about header"><input className={inputClass} value={[content.profile?.aboutHeadingPrefix || "", content.profile?.aboutHeadingAccent || "", content.profile?.aboutHeadingSuffix || ""].filter(Boolean).join(" ")} onChange={(e) => { const parts = e.target.value.trim().split(/\s+/); const one = Math.ceil(parts.length/3); const two = Math.ceil((parts.length-one)/2); update("profile.aboutHeadingPrefix", parts.slice(0, one).join(" ")); update("profile.aboutHeadingAccent", parts.slice(one, one+two).join(" ")); update("profile.aboutHeadingSuffix", parts.slice(one+two).join(" ")); }} /></Field></div>
                 <div className="md:col-span-2"><Field label="about text"><textarea rows={4} className={inputClass} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} /></Field></div>
                 <Field label="سابقه کار به سال"><input type="number" className={inputClass} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} /></Field>
@@ -273,11 +345,13 @@ export default function AdminPage() {
                       {previewData ? <img src={previewData} alt="preview" className="rounded-xl border border-white/10 max-h-[420px]" /> : null}
                     </div>
                     <div className="space-y-4">
-                      <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha); }} className="w-full"/></label>
-                      <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha); }} className="w-full"/></label>
-                      <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v); }} className="w-full"/></label>
+                      <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v, zoom); }} className="w-full"/></label>
+                      <label className="text-xs">Zoom: {zoom.toFixed(2)}<input type="range" min="1" max="2.2" step="0.01" value={zoom} onChange={(e)=>{ const v=Number(e.target.value); setZoom(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, alpha, v); }} className="w-full"/></label>
                       <div className="flex gap-2 flex-wrap">
                         <button onClick={quickTransparent} className="px-4 py-2 rounded-xl bg-cyan-600">شفاف‌سازی سریع</button>
+                        <button onClick={autoRemoveBackground} className="px-4 py-2 rounded-xl bg-emerald-600">انتخاب شخص / حذف پس‌زمینه</button>
                         <button onClick={applyCrop} className="px-4 py-2 rounded-xl bg-purple-600">اعمال</button>
                         <button onClick={()=>setCropOpen(false)} className="px-4 py-2 rounded-xl border border-white/20">بستن</button>
                       </div>
