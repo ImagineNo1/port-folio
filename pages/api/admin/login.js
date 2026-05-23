@@ -10,10 +10,20 @@ function verifyPassword(password, full) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { username, password } = req.body || {};
-  const client = await clientPromise;
-  const user = await client.db().collection("admin_users").findOne({ username });
-  if (!user || !verifyPassword(password, user.passwordHash)) return res.status(401).json({ message: "Invalid credentials" });
-  setAuthCookie(res, signAdminToken({ username }));
-  res.status(200).json({ ok: true });
+
+  try {
+    const { username, password } = req.body || {};
+    const client = await clientPromise;
+    const user = await client.db().collection("admin_users").findOne({ username });
+
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ message: "نام کاربری یا رمز عبور اشتباه است" });
+    }
+
+    setAuthCookie(res, signAdminToken({ username }));
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error("Admin login error:", error);
+    return res.status(500).json({ message: "خطا در اتصال به دیتابیس یا سرور" });
+  }
 }

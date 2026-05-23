@@ -7,6 +7,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [dbStatus, setDbStatus] = useState("");
 
   useEffect(() => {
     const check = async () => {
@@ -15,6 +16,13 @@ export default function AdminLoginPage() {
     };
     check();
   }, [router]);
+
+  const runDbCheck = async () => {
+    setDbStatus("در حال بررسی اتصال...");
+    const response = await fetch("/api/admin/db-check");
+    const data = await response.json().catch(() => ({}));
+    setDbStatus(data.message || (response.ok ? "اتصال موفق" : "بررسی ناموفق"));
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -82,6 +90,15 @@ export default function AdminLoginPage() {
           </button>
 
           {message ? <p className="text-red-300 text-sm text-center">{message}</p> : null}
+
+          <button
+            type="button"
+            onClick={runDbCheck}
+            className="w-full h-11 border border-white/20 text-white/80 rounded-xl text-sm hover:bg-white/5"
+          >
+            باگ‌یابی اتصال دیتابیس
+          </button>
+          {dbStatus ? <p className="text-white/70 text-xs text-center">{dbStatus}</p> : null}
         </form>
       </div>
     </div>
