@@ -107,7 +107,7 @@ const About = ({ content }) => {
         exit="hidden"
         className="hidden xl:flex absolute bottom-0 -left-[370px]"
       >
-        <Avatar src={content.profile.avatarImage} />
+        <Avatar src={content.profile.aboutAvatarImage || content.profile.homeAvatarImage || "/avatar.png"} />
       </motion.div>
 
       <div className="container mx-auto h-full flex flex-col items-center xl:flex-row gap-x-6">

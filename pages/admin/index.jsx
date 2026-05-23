@@ -24,6 +24,8 @@ export default function AdminPage() {
   const [aboutDataText, setAboutDataText] = useState("[]");
   const [testimonialItemsText, setTestimonialItemsText] = useState("[]");
   const [serviceItemsText, setServiceItemsText] = useState("[]");
+  const [cropX, setCropX] = useState(50);
+  const [cropY, setCropY] = useState(50);
 
   const loadContent = async () => {
     const response = await fetch("/api/admin/content");
@@ -56,8 +58,36 @@ export default function AdminPage() {
     { key: "work", label: "Work" },
     { key: "testimonials", label: "Testimonials" },
     { key: "header", label: "Header/Social" },
+    { key: "site", label: "مشخصات سایت" },
     { key: "advanced", label: "Advanced" },
   ]), []);
+
+
+  const handleImageUpload = (event, path, square = false) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const size = square ? 128 : 700;
+        canvas.width = size;
+        canvas.height = square ? 128 : 700;
+        const ctx = canvas.getContext("2d");
+        const w = img.width; const h = img.height;
+        const cropW = Math.min(w, h);
+        const cropH = cropW;
+        const sx = Math.max(0, Math.min(w - cropW, Math.round(((cropX/100) * (w - cropW)))));
+        const sy = Math.max(0, Math.min(h - cropH, Math.round(((cropY/100) * (h - cropH)))));
+        ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/png");
+        update(path, dataUrl);
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const saveContent = async () => {
     try {
@@ -132,7 +162,7 @@ export default function AdminPage() {
                 <h2 className="font-bold mb-4">Home</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
-                  <Field label="آدرس آواتار"><input className={inputClass} value={content.profile?.avatarImage || ""} onChange={(e) => update("profile.avatarImage", e.target.value)} /></Field>
+                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.homeAvatarImage")} /><p className="text-xs text-white/50 mt-2">برای کراپ، X/Y را تنظیم کنید و دوباره آپلود کنید.</p></Field>
                   <Field label="شعار سایت - خط اول"><input className={inputClass} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} /></Field>
                   <Field label="شعار سایت - خط دوم"><input className={inputClass} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} /></Field>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
@@ -142,6 +172,7 @@ export default function AdminPage() {
 
             {activeTab === "about" && (
               <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.aboutAvatarImage")} /></Field>
                 <Field label="about header - بخش اول"><input className={inputClass} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} /></Field>
                 <Field label="about header - بخش دوم"><input className={inputClass} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} /></Field>
                 <div className="md:col-span-2"><Field label="about header - بخش سوم"><input className={inputClass} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} /></Field></div>
@@ -183,6 +214,20 @@ export default function AdminPage() {
                 <Field label="لینک دریبل"><input className={inputClass} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} /></Field>
                 <Field label="لینک پینترست"><input className={inputClass} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} /></Field>
                 <Field label="لینک گیتهاب"><input className={inputClass} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} /></Field>
+              </div></section>
+            )}
+
+            {activeTab === "site" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">مشخصات سایت</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="Title سایت (تگ title)"><input className={inputClass} value={content.siteSettings?.title || ""} onChange={(e) => update("siteSettings.title", e.target.value)} /></Field>
+                <Field label="Favicon (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "siteSettings.favicon", true)} /></Field>
+                <div className="md:col-span-2 rounded-xl border border-white/10 p-4">
+                  <p className="text-sm mb-2">نوار تنظیم کراپ قبل از آپلود</p>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>setCropX(Number(e.target.value))} className="w-full"/></label>
+                    <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>setCropY(Number(e.target.value))} className="w-full"/></label>
+                  </div>
+                </div>
               </div></section>
             )}
 
