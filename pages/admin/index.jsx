@@ -1,21 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-const baseInput = "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-violet-400";
+const inputClass = "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-violet-400";
+const cardClass = "rounded-2xl border border-white/10 bg-white/[0.04] p-6";
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <label className="text-xs text-white/70 mb-2 block">{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const router = useRouter();
   const [content, setContent] = useState(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [activeTab, setActiveTab] = useState("home");
+
   const [aboutDataText, setAboutDataText] = useState("[]");
   const [testimonialItemsText, setTestimonialItemsText] = useState("[]");
   const [serviceItemsText, setServiceItemsText] = useState("[]");
-  const [aboutSkillsTitle, setAboutSkillsTitle] = useState("skills");
-  const [aboutAwardsTitle, setAboutAwardsTitle] = useState("awards");
-  const [aboutExperienceTitle, setAboutExperienceTitle] = useState("experience");
-  const [aboutCredentialsTitle, setAboutCredentialsTitle] = useState("credentials");
 
   const loadContent = async () => {
     const response = await fetch("/api/admin/content");
@@ -25,11 +33,6 @@ export default function AdminPage() {
     setAboutDataText(JSON.stringify(data.aboutData || [], null, 2));
     setTestimonialItemsText(JSON.stringify(data.testimonials?.items || [], null, 2));
     setServiceItemsText(JSON.stringify(data.services?.items || [], null, 2));
-    const tabs = data.aboutData || [];
-    setAboutSkillsTitle(tabs[0]?.title || "skills");
-    setAboutAwardsTitle(tabs[1]?.title || "awards");
-    setAboutExperienceTitle(tabs[2]?.title || "experience");
-    setAboutCredentialsTitle(tabs[3]?.title || "credentials");
   };
 
   useEffect(() => {
@@ -46,28 +49,29 @@ export default function AdminPage() {
     });
   };
 
+  const tabItems = useMemo(() => ([
+    { key: "home", label: "Home" },
+    { key: "about", label: "About" },
+    { key: "services", label: "Services" },
+    { key: "work", label: "Work" },
+    { key: "testimonials", label: "Testimonials" },
+    { key: "header", label: "Header/Social" },
+    { key: "advanced", label: "Advanced" },
+  ]), []);
+
   const saveContent = async () => {
     try {
       const aboutData = JSON.parse(aboutDataText);
       const testimonialItems = JSON.parse(testimonialItemsText);
       const serviceItems = JSON.parse(serviceItemsText);
-      const patchedAboutData = [
-        { ...(aboutData[0] || {}), title: aboutSkillsTitle },
-        { ...(aboutData[1] || {}), title: aboutAwardsTitle },
-        { ...(aboutData[2] || {}), title: aboutExperienceTitle },
-        { ...(aboutData[3] || {}), title: aboutCredentialsTitle },
-        ...aboutData.slice(4),
-      ];
-
-      const normalizedServiceItems = [...(serviceItems || [])];
-      while (normalizedServiceItems.length < 3) normalizedServiceItems.push({ title: "", description: "", icon: "RxCrop" });
 
       const payload = {
         ...content,
-        aboutData: patchedAboutData,
+        aboutData,
         testimonials: { ...(content.testimonials || {}), items: testimonialItems },
-        services: { ...(content.services || {}), items: normalizedServiceItems },
+        services: { ...(content.services || {}), items: serviceItems },
       };
+
       setSaving(true);
       const response = await fetch("/api/admin/content", {
         method: "PUT",
@@ -82,7 +86,7 @@ export default function AdminPage() {
       }
 
       await loadContent();
-      setMsg("تغییرات با موفقیت ذخیره و بازخوانی شد.");
+      setMsg("تغییرات با موفقیت ذخیره و در صفحه اصلی قابل مشاهده است.");
     } catch (e) {
       setMsg(`JSON نامعتبر است: ${e.message}`);
     } finally {
@@ -107,73 +111,86 @@ export default function AdminPage() {
             <Link href="/admin" className="block w-full text-right rounded-xl py-3 px-4 bg-gradient-to-r from-purple-600/40 to-pink-500/40 border border-purple-300/20 mt-6">اطلاعات سایت</Link>
             <Link href="/admin/password" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">تغییر رمز عبور</Link>
             <Link href="/admin/contacts" className="block w-full text-right rounded-xl py-3 px-4 text-white/65 border border-white/10">Contacts</Link>
-                      </div>
+          </div>
           <button onClick={logout} className="mt-auto text-red-300 border border-red-300/25 rounded-xl py-3">خروج از حساب</button>
         </aside>
 
         <main className="p-4 md:p-8 lg:p-10">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-5xl mx-auto space-y-6">
             <h1 className="text-3xl font-black">اطلاعات سایت</h1>
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">پروفایل</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} placeholder="نام و نام خانوادگی" />
-              <input className={baseInput} value={content.profile?.avatarImage || ""} onChange={(e) => update("profile.avatarImage", e.target.value)} placeholder="آدرس آواتار" />
-              <input className={baseInput} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} placeholder="شعار سایت - خط اول" />
-              <input className={baseInput} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} placeholder="شعار سایت - خط دوم" />
-              <textarea rows={3} className={`${baseInput} md:col-span-2`} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} placeholder="subheader" />
-              <input className={baseInput} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} placeholder="about header - بخش اول" />
-              <input className={baseInput} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} placeholder="about header - بخش دوم" />
-              <input className={`${baseInput} md:col-span-2`} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} placeholder="about header - بخش سوم" />
-              <textarea rows={4} className={`${baseInput} md:col-span-2`} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} placeholder="about text" />
-            </div></section>
 
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">شمارنده‌ها</h2><div className="grid md:grid-cols-2 gap-4">
-              <input type="number" className={baseInput} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} placeholder="سابقه کار به سال" />
-              <input type="number" className={baseInput} value={content.counters?.satisfiedClients || 0} onChange={(e) => update("counters.satisfiedClients", Number(e.target.value))} placeholder="مشتری" />
-              <input type="number" className={baseInput} value={content.counters?.finishedProjects || 0} onChange={(e) => update("counters.finishedProjects", Number(e.target.value))} placeholder="تعداد پروژه ها" />
-              <input type="number" className={baseInput} value={content.counters?.winningAwards || 0} onChange={(e) => update("counters.winningAwards", Number(e.target.value))} placeholder="جایزه های برده شده" />
-            </div></section>
+            <div className="flex flex-wrap gap-2">
+              {tabItems.map((tab) => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-xl border text-sm ${activeTab === tab.key ? "bg-purple-600/30 border-purple-400/30" : "bg-white/5 border-white/10 text-white/70"}`}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">بخش‌های دیگر</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={content.work?.heading || ""} onChange={(e) => update("work.heading", e.target.value)} placeholder="عنوان نمونه کار" />
-              <input className={baseInput} value={content.services?.heading || ""} onChange={(e) => update("services.heading", e.target.value)} placeholder="عنوان خدمات" />
-              <textarea rows={3} className={baseInput} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} placeholder="متن کارها" />
-              <textarea rows={3} className={baseInput} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} placeholder="متن خدمات" />
-              <input className={`${baseInput} md:col-span-2`} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} placeholder="عنوان نظرات" />
-            </div></section>
+            {activeTab === "home" && (
+              <section className={cardClass}>
+                <h2 className="font-bold mb-4">Home</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
+                  <Field label="آدرس آواتار"><input className={inputClass} value={content.profile?.avatarImage || ""} onChange={(e) => update("profile.avatarImage", e.target.value)} /></Field>
+                  <Field label="شعار سایت - خط اول"><input className={inputClass} value={content.profile?.heroTitleLine1 || ""} onChange={(e) => update("profile.heroTitleLine1", e.target.value)} /></Field>
+                  <Field label="شعار سایت - خط دوم"><input className={inputClass} value={content.profile?.heroTitleLine2 || ""} onChange={(e) => update("profile.heroTitleLine2", e.target.value)} /></Field>
+                  <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
+                </div>
+              </section>
+            )}
 
-            
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">سوشال مدیا هدر</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={content.socials?.youtube || ""} onChange={(e) => update("socials.youtube", e.target.value)} placeholder="لینک یوتیوب" />
-              <input className={baseInput} value={content.socials?.instagram || ""} onChange={(e) => update("socials.instagram", e.target.value)} placeholder="لینک اینستاگرام" />
-              <input className={baseInput} value={content.socials?.facebook || ""} onChange={(e) => update("socials.facebook", e.target.value)} placeholder="لینک فیسبوک" />
-              <input className={baseInput} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} placeholder="لینک دریبل" />
-              <input className={baseInput} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} placeholder="لینک پینترست" />
-              <input className={baseInput} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} placeholder="لینک گیتهاب" />
-            </div></section>
+            {activeTab === "about" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="about header - بخش اول"><input className={inputClass} value={content.profile?.aboutHeadingPrefix || ""} onChange={(e) => update("profile.aboutHeadingPrefix", e.target.value)} /></Field>
+                <Field label="about header - بخش دوم"><input className={inputClass} value={content.profile?.aboutHeadingAccent || ""} onChange={(e) => update("profile.aboutHeadingAccent", e.target.value)} /></Field>
+                <div className="md:col-span-2"><Field label="about header - بخش سوم"><input className={inputClass} value={content.profile?.aboutHeadingSuffix || ""} onChange={(e) => update("profile.aboutHeadingSuffix", e.target.value)} /></Field></div>
+                <div className="md:col-span-2"><Field label="about text"><textarea rows={4} className={inputClass} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} /></Field></div>
+                <Field label="سابقه کار به سال"><input type="number" className={inputClass} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} /></Field>
+                <Field label="مشتری"><input type="number" className={inputClass} value={content.counters?.satisfiedClients || 0} onChange={(e) => update("counters.satisfiedClients", Number(e.target.value))} /></Field>
+                <Field label="تعداد پروژه ها"><input type="number" className={inputClass} value={content.counters?.finishedProjects || 0} onChange={(e) => update("counters.finishedProjects", Number(e.target.value))} /></Field>
+                <Field label="جایزه های برده شده"><input type="number" className={inputClass} value={content.counters?.winningAwards || 0} onChange={(e) => update("counters.winningAwards", Number(e.target.value))} /></Field>
+              </div></section>
+            )}
 
-            
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">تب‌های About</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={aboutSkillsTitle} onChange={(e) => setAboutSkillsTitle(e.target.value)} placeholder="skills" />
-              <input className={baseInput} value={aboutAwardsTitle} onChange={(e) => setAboutAwardsTitle(e.target.value)} placeholder="awards" />
-              <input className={baseInput} value={aboutExperienceTitle} onChange={(e) => setAboutExperienceTitle(e.target.value)} placeholder="experience" />
-              <input className={baseInput} value={aboutCredentialsTitle} onChange={(e) => setAboutCredentialsTitle(e.target.value)} placeholder="credentials" />
-            </div><p className="text-xs text-white/60 mt-3">جزئیات متن/آیکون هر تب از JSON فیلد aboutData پایین صفحه قابل ویرایش است.</p></section>
+            {activeTab === "services" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">Services</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="عنوان خدمات"><input className={inputClass} value={content.services?.heading || ""} onChange={(e) => update("services.heading", e.target.value)} /></Field>
+                <div className="md:col-span-2"><Field label="متن خدمات"><textarea rows={4} className={inputClass} value={content.services?.description || ""} onChange={(e) => update("services.description", e.target.value)} /></Field></div>
+                <div className="md:col-span-2"><Field label="service items (JSON)"><textarea rows={8} className={`${inputClass} font-mono`} value={serviceItemsText} onChange={(e) => setServiceItemsText(e.target.value)} /></Field></div>
+              </div></section>
+            )}
 
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">آیتم‌های Services</h2><div className="grid md:grid-cols-2 gap-4">
-              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[0]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<1) arr.push({title:'',description:'',icon:'RxCrop'}); arr[0] = { ...(arr[0]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Branding" />
-              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[1]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<2) arr.push({title:'',description:'',icon:'RxPencil2'}); arr[1] = { ...(arr[1]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Design" />
-              <input className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[2]||{}).title || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<3) arr.push({title:'',description:'',icon:'RxDesktop'}); arr[2] = { ...(arr[2]||{}), title: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="Development" />
-              <textarea rows={3} className={baseInput} value={(() => { try { return (JSON.parse(serviceItemsText)[0]||{}).description || ""; } catch { return ""; } })()} onChange={(e) => { try { const arr = JSON.parse(serviceItemsText); while(arr.length<1) arr.push({title:'',description:'',icon:'RxCrop'}); arr[0] = { ...(arr[0]||{}), description: e.target.value }; setServiceItemsText(JSON.stringify(arr, null, 2)); } catch {} }} placeholder="متن Branding" />
-            </div></section>
+            {activeTab === "work" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">Work</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="عنوان نمونه کار"><input className={inputClass} value={content.work?.heading || ""} onChange={(e) => update("work.heading", e.target.value)} /></Field>
+                <div className="md:col-span-2"><Field label="متن کارها"><textarea rows={4} className={inputClass} value={content.work?.description || ""} onChange={(e) => update("work.description", e.target.value)} /></Field></div>
+              </div></section>
+            )}
 
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-bold mb-4">آرایه‌های قابل شخصی‌سازی</h2>
-              <label className="text-sm text-white/70">aboutData (JSON)</label>
-              <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={aboutDataText} onChange={(e) => setAboutDataText(e.target.value)} />
-              <label className="text-sm text-white/70 mt-4 block">testimonial items (JSON)</label>
-              <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={testimonialItemsText} onChange={(e) => setTestimonialItemsText(e.target.value)} />
-                          <label className="text-sm text-white/70 mt-4 block">service items (JSON)</label>
-              <textarea rows={8} className={`${baseInput} mt-2 font-mono`} value={serviceItemsText} onChange={(e) => setServiceItemsText(e.target.value)} />
-            </section>
+            {activeTab === "testimonials" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">Testimonials</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="عنوان نظرات"><input className={inputClass} value={content.testimonials?.heading || ""} onChange={(e) => update("testimonials.heading", e.target.value)} /></Field>
+                <div className="md:col-span-2"><Field label="testimonial items (JSON)"><textarea rows={8} className={`${inputClass} font-mono`} value={testimonialItemsText} onChange={(e) => setTestimonialItemsText(e.target.value)} /></Field></div>
+              </div></section>
+            )}
+
+            {activeTab === "header" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">Header/Social</h2><div className="grid md:grid-cols-2 gap-4">
+                <Field label="لینک یوتیوب"><input className={inputClass} value={content.socials?.youtube || ""} onChange={(e) => update("socials.youtube", e.target.value)} /></Field>
+                <Field label="لینک اینستاگرام"><input className={inputClass} value={content.socials?.instagram || ""} onChange={(e) => update("socials.instagram", e.target.value)} /></Field>
+                <Field label="لینک فیسبوک"><input className={inputClass} value={content.socials?.facebook || ""} onChange={(e) => update("socials.facebook", e.target.value)} /></Field>
+                <Field label="لینک دریبل"><input className={inputClass} value={content.socials?.dribbble || ""} onChange={(e) => update("socials.dribbble", e.target.value)} /></Field>
+                <Field label="لینک پینترست"><input className={inputClass} value={content.socials?.pinterest || ""} onChange={(e) => update("socials.pinterest", e.target.value)} /></Field>
+                <Field label="لینک گیتهاب"><input className={inputClass} value={content.socials?.github || ""} onChange={(e) => update("socials.github", e.target.value)} /></Field>
+              </div></section>
+            )}
+
+            {activeTab === "advanced" && (
+              <section className={cardClass}><h2 className="font-bold mb-4">Advanced JSON</h2>
+                <Field label="aboutData (JSON)"><textarea rows={10} className={`${inputClass} font-mono`} value={aboutDataText} onChange={(e) => setAboutDataText(e.target.value)} /></Field>
+              </section>
+            )}
 
             <div className="sticky bottom-4">
               <button onClick={saveContent} disabled={saving} className="w-full rounded-xl py-3 bg-gradient-to-r from-purple-600 to-pink-500 font-semibold">{saving ? "در حال ذخیره..." : "ذخیره تغییرات"}</button>
