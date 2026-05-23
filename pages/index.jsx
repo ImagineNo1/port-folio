@@ -20,8 +20,8 @@ const Home = ({ content }) => {
             exit="hidden"
             className="h1"
           >
-            Transforming Ideas <br /> Into{" "}
-            <span className="text-accent">Digital Reality</span>
+            {content.profile.heroTitleLine1} <br />
+            <span className="text-accent">{content.profile.heroTitleLine2}</span>
           </motion.h1>
 
           {/* subtitle */}
