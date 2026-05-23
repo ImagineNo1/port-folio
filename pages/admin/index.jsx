@@ -26,6 +26,13 @@ export default function AdminPage() {
   const [serviceItemsText, setServiceItemsText] = useState("[]");
   const [cropX, setCropX] = useState(50);
   const [cropY, setCropY] = useState(50);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropTargetPath, setCropTargetPath] = useState("profile.homeAvatarImage");
+  const [cropSquare, setCropSquare] = useState(false);
+  const [cropSource, setCropSource] = useState("");
+  const [previewData, setPreviewData] = useState("");
+  const [alpha, setAlpha] = useState(1);
+
 
   const loadContent = async () => {
     const response = await fetch("/api/admin/content");
@@ -60,33 +67,6 @@ export default function AdminPage() {
     { key: "header", label: "Header/Social" },
     { key: "site", label: "مشخصات سایت" },
       ]), []);
-
-
-  const handleImageUpload = (event, path, square = false) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const size = square ? 128 : 700;
-        canvas.width = size;
-        canvas.height = square ? 128 : 700;
-        const ctx = canvas.getContext("2d");
-        const w = img.width; const h = img.height;
-        const cropW = Math.min(w, h);
-        const cropH = cropW;
-        const sx = Math.max(0, Math.min(w - cropW, Math.round(((cropX/100) * (w - cropW)))));
-        const sy = Math.max(0, Math.min(h - cropH, Math.round(((cropY/100) * (h - cropH)))));
-        ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/png");
-        update(path, dataUrl);
-      };
-      img.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
 
   const saveContent = async () => {
     try {
@@ -161,7 +141,7 @@ export default function AdminPage() {
                 <h2 className="font-bold mb-4">Home</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Field label="نام و نام خانوادگی"><input className={inputClass} value={content.profile?.fullName || ""} onChange={(e) => update("profile.fullName", e.target.value)} /></Field>
-                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.homeAvatarImage")} /><p className="text-xs text-white/50 mt-2">برای کراپ، X/Y را تنظیم کنید و دوباره آپلود کنید.</p></Field>
+                  <Field label="تصویر Home (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.homeAvatarImage", false, content.profile?.homeAvatarOpacity ?? 1)} /><p className="text-xs text-white/50 mt-2">برای کراپ، X/Y را تنظیم کنید و دوباره آپلود کنید.</p></Field>
                   <div className="md:col-span-2"><Field label="شعار سایت"><input className={inputClass} value={[content.profile?.heroTitleLine1 || "", content.profile?.heroTitleLine2 || ""].filter(Boolean).join(" ")} onChange={(e) => { const val = e.target.value; const mid = Math.ceil(val.length / 2); update("profile.heroTitleLine1", val.slice(0, mid).trim()); update("profile.heroTitleLine2", val.slice(mid).trim()); }} /></Field></div>
                   <div className="md:col-span-2"><Field label="subheader"><textarea rows={4} className={inputClass} value={content.profile?.heroSubtitle || ""} onChange={(e) => update("profile.heroSubtitle", e.target.value)} /></Field></div>
                 </div>
@@ -170,7 +150,7 @@ export default function AdminPage() {
 
             {activeTab === "about" && (
               <section className={cardClass}><h2 className="font-bold mb-4">About</h2><div className="grid md:grid-cols-2 gap-4">
-                <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "profile.aboutAvatarImage")} /></Field>
+                <Field label="تصویر سمت چپ About (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "profile.aboutAvatarImage", false, content.profile?.aboutAvatarOpacity ?? 1)} /></Field>
                 <div className="md:col-span-2"><Field label="about header"><input className={inputClass} value={[content.profile?.aboutHeadingPrefix || "", content.profile?.aboutHeadingAccent || "", content.profile?.aboutHeadingSuffix || ""].filter(Boolean).join(" ")} onChange={(e) => { const parts = e.target.value.trim().split(/\s+/); const one = Math.ceil(parts.length/3); const two = Math.ceil((parts.length-one)/2); update("profile.aboutHeadingPrefix", parts.slice(0, one).join(" ")); update("profile.aboutHeadingAccent", parts.slice(one, one+two).join(" ")); update("profile.aboutHeadingSuffix", parts.slice(one+two).join(" ")); }} /></Field></div>
                 <div className="md:col-span-2"><Field label="about text"><textarea rows={4} className={inputClass} value={content.profile?.aboutDescription || ""} onChange={(e) => update("profile.aboutDescription", e.target.value)} /></Field></div>
                 <Field label="سابقه کار به سال"><input type="number" className={inputClass} value={content.counters?.yearsOfExperience || 0} onChange={(e) => update("counters.yearsOfExperience", Number(e.target.value))} /></Field>
@@ -214,7 +194,7 @@ export default function AdminPage() {
             {activeTab === "site" && (
               <section className={cardClass}><h2 className="font-bold mb-4">مشخصات سایت</h2><div className="grid md:grid-cols-2 gap-4">
                 <Field label="Title سایت (تگ title)"><input className={inputClass} value={content.siteSettings?.title || ""} onChange={(e) => update("siteSettings.title", e.target.value)} /></Field>
-                <Field label="Favicon (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => handleImageUpload(e, "siteSettings.favicon", true)} /></Field>
+                <Field label="Favicon (آپلود)"><input type="file" accept="image/*" className={inputClass} onChange={(e) => openCropper(e, "siteSettings.favicon", true, 1)} /></Field>
                 <div className="md:col-span-2 rounded-xl border border-white/10 p-4">
                   <p className="text-sm mb-2">نوار تنظیم کراپ قبل از آپلود</p>
                   <div className="grid md:grid-cols-2 gap-3">
@@ -223,6 +203,30 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div></section>
+            )}
+
+
+            {cropOpen && (
+              <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0b122f] p-5 space-y-4">
+                  <h3 className="font-bold">کراپ و تنظیم شفافیت تصویر</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-white/60 mb-2">پیش‌نمایش</p>
+                      {previewData ? <img src={previewData} alt="preview" className="rounded-xl border border-white/10 max-h-[420px]" /> : null}
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-xs">Crop X: {cropX}<input type="range" min="0" max="100" value={cropX} onChange={(e)=>{ const v=Number(e.target.value); setCropX(v); renderCropPreview(cropSource, cropSquare, v, cropY, alpha); }} className="w-full"/></label>
+                      <label className="text-xs">Crop Y: {cropY}<input type="range" min="0" max="100" value={cropY} onChange={(e)=>{ const v=Number(e.target.value); setCropY(v); renderCropPreview(cropSource, cropSquare, cropX, v, alpha); }} className="w-full"/></label>
+                      <label className="text-xs">Transparency: {alpha.toFixed(2)}<input type="range" min="0.2" max="1" step="0.01" value={alpha} onChange={(e)=>{ const v=Number(e.target.value); setAlpha(v); renderCropPreview(cropSource, cropSquare, cropX, cropY, v); }} className="w-full"/></label>
+                      <div className="flex gap-2">
+                        <button onClick={applyCrop} className="px-4 py-2 rounded-xl bg-purple-600">اعمال</button>
+                        <button onClick={()=>setCropOpen(false)} className="px-4 py-2 rounded-xl border border-white/20">بستن</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             <div className="sticky bottom-4">
