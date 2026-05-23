@@ -11,12 +11,25 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       message: `اتصال دیتابیس برقرار است. تعداد ادمین‌ها: ${adminUsers}`,
+      details: {
+        hasMongoUri: Boolean(process.env.MONGODB_URI),
+        dbName: client.db().databaseName,
+        adminUsers,
+      },
     });
   } catch (error) {
-    console.error("DB check error:", error);
     return res.status(500).json({
       ok: false,
-      message: "اتصال دیتابیس برقرار نیست. MONGODB_URI و دسترسی شبکه را بررسی کنید.",
+      message: "اتصال دیتابیس برقرار نیست.",
+      error: {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+        cause: error?.cause || null,
+      },
+      details: {
+        hasMongoUri: Boolean(process.env.MONGODB_URI),
+      },
     });
   }
 }

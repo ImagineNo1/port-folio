@@ -8,17 +8,19 @@ import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
+  const plainPage = router.pathname.startsWith("/admin") || router.pathname.startsWith("/debug");
 
-  return (
-    <Layout>
-      <AnimatePresence mode="wait">
-        <motion.div key={router.route} className="h-full">
-          <Transition />
-          <Component {...pageProps} />
-        </motion.div>
-      </AnimatePresence>
-    </Layout>
+  const page = (
+    <AnimatePresence mode="wait">
+      <motion.div key={router.route} className="h-full">
+        {!plainPage && <Transition />}
+        <Component {...pageProps} />
+      </motion.div>
+    </AnimatePresence>
   );
+
+  if (plainPage) return page;
+  return <Layout>{page}</Layout>;
 }
 
 export default MyApp;
