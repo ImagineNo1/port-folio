@@ -3,9 +3,11 @@ import { BsArrowRight } from "react-icons/bs";
 
 import { fadeIn } from "../../variants";
 import { useState } from "react";
+import { useLanguage } from "../../lib/language";
 
 const Contact = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { t, locale } = useLanguage();
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -26,11 +28,11 @@ const Contact = () => {
     })
       .then(async (res) => {
         if (res.ok) {
-          alert("Thank you. I will get back to you ASAP.");
+          alert(t("thanks_message"));
           myForm.reset();
         } else {
           const data = await res.json().catch(() => ({}));
-          alert(data.message || "Failed to send message");
+          alert(data.message || t("failed_send"));
         }
       })
       .catch((error) => console.log(error))
@@ -38,7 +40,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="h-full bg-primary/30">
+    <div dir={locale === "fa" ? "rtl" : "ltr"} className="h-full bg-primary/30">
       <div className="container mx-auto py-32 text-center xl:text-left flex items-center justify-center h-full">
         {/* text & form */}
         <div className="flex flex-col w-full max-w-[700px]">
@@ -50,7 +52,7 @@ const Contact = () => {
             exit="hidden"
             className="h2 text-center mb-12"
           >
-            Let's <span className="text-accent">connect.</span>
+            {t("contact_title_prefix")} <span className="text-accent">{t("contact_title_accent")}</span>
           </motion.h2>
 
           {/* form */}
@@ -72,7 +74,7 @@ const Contact = () => {
               <input
                 type="text"
                 name="name"
-                placeholder="Name"
+                placeholder={t("name")}
                 className="input"
                 disabled={isLoading}
                 aria-disabled={isLoading}
@@ -82,7 +84,7 @@ const Contact = () => {
               <input
                 type="email"
                 name="email"
-                placeholder="E-mail"
+                placeholder={t("email")}
                 className="input"
                 disabled={isLoading}
                 aria-disabled={isLoading}
@@ -93,7 +95,7 @@ const Contact = () => {
             <input
               type="text"
               name="subject"
-              placeholder="Subject"
+              placeholder={t("subject")}
               className="input"
               disabled={isLoading}
               aria-disabled={isLoading}
@@ -102,7 +104,7 @@ const Contact = () => {
             />
             <textarea
               name="message"
-              placeholder="Message..."
+              placeholder={t("message")}
               className="textarea"
               disabled={isLoading}
               aria-disabled={isLoading}
@@ -116,7 +118,7 @@ const Contact = () => {
               aria-disabled={isLoading}
             >
               <span className="group-hover:-translate-y-[120%] group-hover:opacity-0 transition-all duration-500">
-                Let's talk
+                {t("lets_talk")}
               </span>
 
               <BsArrowRight

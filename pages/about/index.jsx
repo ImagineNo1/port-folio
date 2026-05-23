@@ -19,6 +19,7 @@ import {
 import Avatar from "../../components/Avatar";
 import Circles from "../../components/Circles";
 import { fadeIn } from "../../variants";
+import { useLanguage } from "../../lib/language";
 
 //  data
 export const aboutData = [
@@ -94,6 +95,7 @@ export const aboutData = [
 
 const About = ({ content }) => {
   const [index, setIndex] = useState(0);
+  const { t } = useLanguage();
 
   return (
     <div className="h-full bg-primary/30 py-32 text-center xl:text-left">
@@ -145,7 +147,7 @@ const About = ({ content }) => {
                   <CountUp start={0} end={content.counters.yearsOfExperience} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
-                  Years of experience.
+                  {t("years_of_experience")}
                 </div>
               </div>
 
@@ -155,7 +157,7 @@ const About = ({ content }) => {
                   <CountUp start={0} end={content.counters.satisfiedClients} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
-                  Satisfied clients.
+                  {t("satisfied_clients")}
                 </div>
               </div>
 
@@ -165,7 +167,7 @@ const About = ({ content }) => {
                   <CountUp start={0} end={content.counters.finishedProjects} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
-                  Finished projects.
+                  {t("finished_projects")}
                 </div>
               </div>
 
@@ -175,7 +177,7 @@ const About = ({ content }) => {
                   <CountUp start={0} end={content.counters.winningAwards} duration={5} />
                 </div>
                 <div className="text-xs uppercase tracking-[1px] leading-[1.4] max-w-[100px]">
-                  Winning awards.
+                  {t("winning_awards")}
                 </div>
               </div>
             </div>

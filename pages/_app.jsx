@@ -6,6 +6,7 @@ import Layout from "../components/Layout";
 import Transition from "../components/Transition";
 
 import "../styles/globals.css";
+import { LanguageProvider } from "../lib/language";
 
 function PublicLoading() {
   return (
@@ -52,7 +53,7 @@ function MyApp({ Component, pageProps }) {
 
   if (plainPage) return page;
   if (loading || !siteContent) return <PublicLoading />;
-  return <Layout siteContent={siteContent}>{page}</Layout>;
+  return <LanguageProvider><Layout siteContent={siteContent}>{page}</Layout></LanguageProvider>;
 }
 
 export default MyApp;
